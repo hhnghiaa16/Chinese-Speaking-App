@@ -1,0 +1,42 @@
+export const hskLevels = [
+  {
+    key: 'HSK1',
+    number: 1,
+    title: 'HSK 1',
+    subtitle: 'Khởi đầu',
+    vocabCount: '~150 từ',
+    available: true,
+  },
+  {
+    key: 'HSK2',
+    number: 2,
+    title: 'HSK 2',
+    subtitle: 'Sơ cấp',
+    vocabCount: '~300 từ',
+    available: true,
+  },
+  {
+    key: 'HSK3',
+    number: 3,
+    title: 'HSK 3',
+    subtitle: 'Trung sơ cấp',
+    vocabCount: '~600 từ',
+    available: true,
+  },
+  {
+    key: 'HSK4',
+    number: 4,
+    title: 'HSK 4',
+    subtitle: 'Trung cấp',
+    vocabCount: '~1200 từ',
+    available: true,
+  },
+  {
+    key: 'HSK5',
+    number: 5,
+    title: 'HSK 5',
+    subtitle: 'Trung cao cấp',
+    vocabCount: '~2500 từ',
+    available: true,
+  },
+] as const;
