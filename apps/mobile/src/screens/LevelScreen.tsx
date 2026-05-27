@@ -1,19 +1,59 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { HomeHeader } from '../components/home/HomeHeader';
 import { LevelCard } from '../components/level/LevelCard';
 import { LevelIntro } from '../components/level/LevelIntro';
 import { hskLevels } from '../data/levels';
+import { getHskLevelsFromApi } from '../services/api/hskApi';
 import { COLORS } from '../theme/colors';
 import { RootStackParamList } from '../types/navigation';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Level'>;
-type HskLevel = (typeof hskLevels)[number];
+type HskLevel = {
+  key: RootStackParamList['Topic']['level'];
+  number: number;
+  title: string;
+  subtitle: string;
+  vocabCount: string;
+  available: boolean;
+};
 
 export function LevelScreen({ navigation }: Props) {
+  const [levels, setLevels] = useState<HskLevel[]>([...hskLevels]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadLevels() {
+      try {
+        const apiLevels = await getHskLevelsFromApi();
+
+        if (isMounted) {
+          setLevels(apiLevels);
+        }
+      } catch {
+        if (isMounted) {
+          setLevels([...hskLevels]);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void loadLevels();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const handleSelectLevel = (level: HskLevel) => {
     if (level.available) {
       navigation.navigate('Topic', { level: level.key });
@@ -37,7 +77,14 @@ export function LevelScreen({ navigation }: Props) {
         >
           <LevelIntro />
 
-          {hskLevels.map((level) => (
+          {isLoading ? (
+            <View style={styles.loadingState}>
+              <ActivityIndicator color={COLORS.yellow} />
+              <Text style={styles.loadingText}>Đang tải trình độ...</Text>
+            </View>
+          ) : null}
+
+          {levels.map((level) => (
             <LevelCard
               key={level.key}
               number={level.number}
@@ -83,5 +130,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(37, 16, 100, 0.24)',
     top: 520,
     right: -120,
+  },
+  loadingState: {
+    alignItems: 'center',
+    paddingVertical: 18,
+  },
+  loadingText: {
+    color: COLORS.textSecondary,
+    fontSize: 13,
+    marginTop: 10,
   },
 });

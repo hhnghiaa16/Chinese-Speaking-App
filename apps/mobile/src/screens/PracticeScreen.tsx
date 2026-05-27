@@ -1,8 +1,16 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Speech from 'expo-speech';
-import { useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { HomeHeader } from '../components/home/HomeHeader';
@@ -12,7 +20,8 @@ import { PracticeMetaBar } from '../components/practice/PracticeMetaBar';
 import { PracticeProgressBar } from '../components/practice/PracticeProgressBar';
 import { PracticeQuestionCard } from '../components/practice/PracticeQuestionCard';
 import { ScoreFeedback } from '../components/practice/ScoreFeedback';
-import { practiceQuestions } from '../data/questions';
+import { PracticeQuestion, practiceQuestions as mockPracticeQuestions } from '../data/questions';
+import { getQuestionsFromApi, MobilePracticeQuestion } from '../services/api/questionsApi';
 import { COLORS } from '../theme/colors';
 import { serifFont } from '../theme/typography';
 import { RootStackParamList } from '../types/navigation';
@@ -34,22 +43,77 @@ export function PracticeScreen({ navigation, route }: Props) {
   const [hasScored, setHasScored] = useState(false);
   const [score, setScore] = useState<number | null>(null);
   const [answers, setAnswers] = useState<PracticeAnswer[]>([]);
+  const [isLoadingQuestions, setIsLoadingQuestions] = useState(true);
+  const [practiceQuestions, setPracticeQuestions] = useState<
+    Array<PracticeQuestion | MobilePracticeQuestion>
+  >([]);
 
-  const practiceQuestionsForRoute = useMemo(
-    () =>
-      practiceQuestions.filter(
-        (question) => question.hsk_level === level && question.topic === topic,
-      ),
-    [level, topic],
-  );
+  useEffect(() => {
+    setCurrentIndex(0);
+  }, [practiceQuestions]);
 
-  if (practiceQuestionsForRoute.length === 0) {
+  useEffect(() => {
+    let isMounted = true;
+
+    const mockQuestions = mockPracticeQuestions.filter(
+      (question) => question.hsk_level === level && question.topic === topic,
+    );
+
+    async function loadQuestions() {
+      setIsLoadingQuestions(true);
+      setCurrentIndex(0);
+      setUserAnswer('');
+      setShowHint(false);
+      setShowSample(false);
+      setHasScored(false);
+      setScore(null);
+      setAnswers([]);
+
+      try {
+        const apiQuestions = await getQuestionsFromApi(level, topic);
+
+        if (isMounted) {
+          setPracticeQuestions(apiQuestions.length > 0 ? apiQuestions : mockQuestions);
+        }
+      } catch {
+        if (isMounted) {
+          setPracticeQuestions(mockQuestions);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingQuestions(false);
+        }
+      }
+    }
+
+    void loadQuestions();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [level, topic]);
+
+  if (isLoadingQuestions) {
+    return (
+      <LinearGradient colors={['#050316', '#08051F', '#050316']} style={styles.container}>
+        <SafeAreaView style={styles.safeArea} edges={['top']}>
+          <HomeHeader activeTab="practice" />
+          <View style={styles.loadingState}>
+            <ActivityIndicator color={COLORS.yellow} />
+            <Text style={styles.loadingText}>Đang tải câu hỏi...</Text>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
+    );
+  }
+
+  if (practiceQuestions.length === 0) {
     return (
       <LinearGradient colors={['#050316', '#08051F', '#050316']} style={styles.container}>
         <SafeAreaView style={styles.safeArea} edges={['top']}>
           <HomeHeader activeTab="practice" />
           <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>Chưa có câu hỏi cho chủ đề này</Text>
+            <Text style={styles.emptyTitle}>Chưa có câu hỏi cho chủ đề này.</Text>
             <Text style={styles.emptyDescription}>
               Bạn có thể quay lại chọn chủ đề khác để tiếp tục luyện tập.
             </Text>
@@ -65,9 +129,9 @@ export function PracticeScreen({ navigation, route }: Props) {
     );
   }
 
-  const currentQuestion = practiceQuestionsForRoute[currentIndex];
+  const currentQuestion = practiceQuestions[currentIndex];
   const current = currentIndex + 1;
-  const total = practiceQuestionsForRoute.length;
+  const total = practiceQuestions.length;
   const isLastQuestion = currentIndex === total - 1;
 
   const handleSpeakQuestion = () => {
@@ -257,5 +321,16 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: 13,
     fontWeight: '700',
+  },
+  loadingState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  loadingText: {
+    color: COLORS.textSecondary,
+    fontSize: 13,
+    marginTop: 10,
   },
 });

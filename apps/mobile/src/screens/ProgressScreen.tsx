@@ -1,6 +1,7 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { HomeHeader } from '../components/home/HomeHeader';
@@ -11,12 +12,45 @@ import { RecentPracticeCard } from '../components/progress/RecentPracticeCard';
 import { RecommendationCard } from '../components/progress/RecommendationCard';
 import { StatsGrid } from '../components/progress/StatsGrid';
 import { progressMock } from '../data/progressMock';
+import { getProgressFromApi } from '../services/api/progressApi';
 import { COLORS } from '../theme/colors';
 import { RootStackParamList } from '../types/navigation';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Progress'>;
+type ProgressData = typeof progressMock;
 
 export function ProgressScreen({ navigation }: Props) {
+  const [progress, setProgress] = useState<ProgressData>(progressMock);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadProgress() {
+      try {
+        const apiProgress = await getProgressFromApi();
+
+        if (isMounted) {
+          setProgress(apiProgress);
+        }
+      } catch {
+        if (isMounted) {
+          setProgress(progressMock);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void loadProgress();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <LinearGradient colors={['#050316', '#08051F', '#050316']} style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -31,26 +65,33 @@ export function ProgressScreen({ navigation }: Props) {
         >
           <ProgressHero />
 
+          {isLoading ? (
+            <View style={styles.loadingState}>
+              <ActivityIndicator color={COLORS.yellow} />
+              <Text style={styles.loadingText}>Đang tải tiến độ...</Text>
+            </View>
+          ) : null}
+
           <StatsGrid
-            totalSessions={progressMock.totalSessions}
-            averageScore={progressMock.averageScore}
-            totalQuestions={progressMock.totalQuestions}
-            streakDays={progressMock.streakDays}
+            totalSessions={progress.totalSessions}
+            averageScore={progress.averageScore}
+            totalQuestions={progress.totalQuestions}
+            streakDays={progress.streakDays}
           />
 
-          <HSKProgressSection items={progressMock.hskProgress} />
+          <HSKProgressSection items={progress.hskProgress} />
 
           <RecentPracticeCard
-            level={progressMock.recentPractice.level}
-            topicEmoji={progressMock.recentPractice.topicEmoji}
-            topicVi={progressMock.recentPractice.topicVi}
-            questions={progressMock.recentPractice.questions}
-            score={progressMock.recentPractice.score}
+            level={progress.recentPractice.level}
+            topicEmoji={progress.recentPractice.topicEmoji}
+            topicVi={progress.recentPractice.topicVi}
+            questions={progress.recentPractice.questions}
+            score={progress.recentPractice.score}
           />
 
           <RecommendationCard
-            level={progressMock.recentPractice.level}
-            topicVi={progressMock.recentPractice.topicVi}
+            level={progress.recentPractice.level}
+            topicVi={progress.recentPractice.topicVi}
           />
 
           <ProgressCTA onPress={() => navigation.navigate('Level')} />
@@ -90,5 +131,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(245, 200, 75, 0.08)',
     top: 520,
     right: -120,
+  },
+  loadingState: {
+    alignItems: 'center',
+    paddingVertical: 18,
+  },
+  loadingText: {
+    color: COLORS.textSecondary,
+    fontSize: 13,
+    marginTop: 10,
   },
 });
