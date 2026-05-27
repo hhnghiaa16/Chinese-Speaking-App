@@ -17,5 +17,6 @@ export type RootStackParamList = {
     topic: TopicKey;
     totalQuestions: number;
     answeredQuestions: number;
+    averageScore: number;
   };
 };

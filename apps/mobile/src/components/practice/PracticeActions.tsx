@@ -5,6 +5,9 @@ import { COLORS } from '../../theme/colors';
 
 type PracticeActionsProps = {
   hasScored: boolean;
+  isGrading: boolean;
+  isRecording: boolean;
+  isTranscribing: boolean;
   isLastQuestion: boolean;
   onRecord: () => void;
   onToggleHint: () => void;
@@ -16,6 +19,9 @@ type PracticeActionsProps = {
 
 export function PracticeActions({
   hasScored,
+  isGrading,
+  isRecording,
+  isTranscribing,
   isLastQuestion,
   onRecord,
   onToggleHint,
@@ -41,9 +47,15 @@ export function PracticeActions({
 
   return (
     <View style={styles.container}>
-      <Pressable style={[styles.buttonBase, styles.primaryPurple]} onPress={onRecord}>
+      <Pressable
+        style={[styles.buttonBase, styles.primaryPurple]}
+        disabled={isTranscribing}
+        onPress={onRecord}
+      >
         <Mic color={COLORS.white} size={15} strokeWidth={1.8} />
-        <Text style={[styles.buttonText, styles.primaryText]}>Ghi âm</Text>
+        <Text style={[styles.buttonText, styles.primaryText]}>
+          {isRecording ? 'Dừng ghi' : 'Ghi âm'}
+        </Text>
       </Pressable>
 
       <Pressable style={[styles.buttonBase, styles.outline]} onPress={onToggleHint}>
@@ -56,9 +68,15 @@ export function PracticeActions({
         <Text style={[styles.buttonText, styles.outlineText]}>Câu mẫu</Text>
       </Pressable>
 
-      <Pressable style={[styles.buttonBase, styles.yellow, styles.scoreButton]} onPress={onScore}>
+      <Pressable
+        style={[styles.buttonBase, styles.yellow, styles.scoreButton]}
+        disabled={isGrading || isTranscribing}
+        onPress={onScore}
+      >
         <Sparkles color="#1A1233" size={16} strokeWidth={1.8} />
-        <Text style={[styles.buttonText, styles.yellowText]}>Chấm điểm</Text>
+        <Text style={[styles.buttonText, styles.yellowText]}>
+          {isGrading ? 'Đang chấm...' : 'Chấm điểm'}
+        </Text>
       </Pressable>
     </View>
   );

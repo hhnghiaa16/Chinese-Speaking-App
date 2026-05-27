@@ -2,7 +2,7 @@ type ApiSuccessResponse<T> = {
   data: T;
 };
 
-const API_TIMEOUT_MS = 10000;
+const API_TIMEOUT_MS = 60000;
 
 function getBaseUrl() {
   const baseUrl = process.env.EXPO_PUBLIC_API_URL;
@@ -14,18 +14,26 @@ function getBaseUrl() {
   return baseUrl.replace(/\/$/, '');
 }
 
-export async function apiGet<T>(path: string): Promise<T> {
+export function getApiUrl(path: string) {
+  return `${getBaseUrl()}${path}`;
+}
+
+async function apiRequest<T>(path: string, init: RequestInit): Promise<T> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
 
   try {
-    const response = await fetch(`${getBaseUrl()}${path}`, {
-      method: 'GET',
+    const response = await fetch(getApiUrl(path), {
+      ...init,
       signal: controller.signal,
     });
 
     if (!response.ok) {
-      throw new Error(`API GET ${path} failed with status ${response.status}.`);
+      const errorText = await response.text();
+
+      throw new Error(
+        `API ${init.method ?? 'GET'} ${path} failed with status ${response.status}: ${errorText}`,
+      );
     }
 
     const json = (await response.json()) as ApiSuccessResponse<T>;
@@ -34,4 +42,20 @@ export async function apiGet<T>(path: string): Promise<T> {
   } finally {
     clearTimeout(timeout);
   }
+}
+
+export async function apiGet<T>(path: string): Promise<T> {
+  return apiRequest<T>(path, {
+    method: 'GET',
+  });
+}
+
+export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
+  return apiRequest<T>(path, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+    },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
 }

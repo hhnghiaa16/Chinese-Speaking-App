@@ -1,4 +1,10 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import {
+  AudioModule,
+  RecordingPresets,
+  setAudioModeAsync,
+  useAudioRecorder,
+} from 'expo-audio';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Speech from 'expo-speech';
 import { useEffect, useState } from 'react';
@@ -21,6 +27,13 @@ import { PracticeProgressBar } from '../components/practice/PracticeProgressBar'
 import { PracticeQuestionCard } from '../components/practice/PracticeQuestionCard';
 import { ScoreFeedback } from '../components/practice/ScoreFeedback';
 import { PracticeQuestion, practiceQuestions as mockPracticeQuestions } from '../data/questions';
+import {
+  completePracticeSession as completePracticeSessionFromApi,
+  createPracticeSession,
+  GradeAnswerApiDto,
+  gradeAnswerFromApi,
+  transcribeAudioFromApi,
+} from '../services/api/practiceApi';
 import { getQuestionsFromApi, MobilePracticeQuestion } from '../services/api/questionsApi';
 import { COLORS } from '../theme/colors';
 import { serifFont } from '../theme/typography';
@@ -41,12 +54,18 @@ export function PracticeScreen({ navigation, route }: Props) {
   const [showHint, setShowHint] = useState(false);
   const [showSample, setShowSample] = useState(false);
   const [hasScored, setHasScored] = useState(false);
-  const [score, setScore] = useState<number | null>(null);
+  const [gradeResult, setGradeResult] = useState<GradeAnswerApiDto | null>(null);
   const [answers, setAnswers] = useState<PracticeAnswer[]>([]);
   const [isLoadingQuestions, setIsLoadingQuestions] = useState(true);
+  const [isGrading, setIsGrading] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingUri, setRecordingUri] = useState<string | null>(null);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [practiceQuestions, setPracticeQuestions] = useState<
     Array<PracticeQuestion | MobilePracticeQuestion>
   >([]);
+  const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
 
   useEffect(() => {
     setCurrentIndex(0);
@@ -66,8 +85,12 @@ export function PracticeScreen({ navigation, route }: Props) {
       setShowHint(false);
       setShowSample(false);
       setHasScored(false);
-      setScore(null);
+      setGradeResult(null);
       setAnswers([]);
+      setSessionId(null);
+      setRecordingUri(null);
+      setIsRecording(false);
+      setIsTranscribing(false);
 
       try {
         const apiQuestions = await getQuestionsFromApi(level, topic);
@@ -92,6 +115,37 @@ export function PracticeScreen({ navigation, route }: Props) {
       isMounted = false;
     };
   }, [level, topic]);
+
+  useEffect(() => {
+    if (isLoadingQuestions || practiceQuestions.length === 0) {
+      return;
+    }
+
+    let isMounted = true;
+
+    async function startPracticeSession() {
+      try {
+        const session = await createPracticeSession(level, topic);
+
+        if (isMounted) {
+          setSessionId(session.sessionId);
+          console.info('[PracticeScreen] Created practice session', session.sessionId);
+        }
+      } catch (error) {
+        console.warn('[PracticeScreen] Failed to create practice session', error);
+
+        if (isMounted) {
+          setSessionId(null);
+        }
+      }
+    }
+
+    void startPracticeSession();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isLoadingQuestions, level, practiceQuestions.length, topic]);
 
   if (isLoadingQuestions) {
     return (
@@ -142,19 +196,48 @@ export function PracticeScreen({ navigation, route }: Props) {
     Speech.speak(currentQuestion.sample_answer_zh, { language: 'zh-CN' });
   };
 
-  const handleScore = () => {
-    const nextScore = 8;
+  const handleScore = async () => {
+    const trimmedAnswer = userAnswer.trim();
 
-    setScore(nextScore);
-    setHasScored(true);
-    setAnswers((currentAnswers) => [
-      ...currentAnswers.filter((answer) => answer.questionId !== currentQuestion.id),
-      {
+    if (isTranscribing) {
+      return;
+    }
+
+    if (!trimmedAnswer) {
+      Alert.alert('Chưa có câu trả lời', 'Hãy nhập hoặc ghi âm câu trả lời trước khi chấm điểm.');
+      return;
+    }
+
+    if (!sessionId) {
+      Alert.alert('Chưa thể chấm điểm', 'Phiên luyện tập chưa sẵn sàng. Vui lòng thử lại.');
+      return;
+    }
+
+    setIsGrading(true);
+
+    try {
+      const result = await gradeAnswerFromApi({
+        sessionId,
         questionId: currentQuestion.id,
-        userAnswer,
-        score: nextScore,
-      },
-    ]);
+        userAnswerZh: trimmedAnswer,
+      });
+
+      setGradeResult(result);
+      setHasScored(true);
+      setAnswers((currentAnswers) => [
+        ...currentAnswers.filter((answer) => answer.questionId !== currentQuestion.id),
+        {
+          questionId: currentQuestion.id,
+          userAnswer: trimmedAnswer,
+          score: result.score,
+        },
+      ]);
+    } catch (error) {
+      console.warn('[PracticeScreen] Failed to grade answer', error);
+      Alert.alert('Lỗi chấm điểm', 'Hiện chưa thể chấm điểm. Vui lòng thử lại.');
+    } finally {
+      setIsGrading(false);
+    }
   };
 
   const handleNext = () => {
@@ -167,24 +250,108 @@ export function PracticeScreen({ navigation, route }: Props) {
     setShowHint(false);
     setShowSample(false);
     setHasScored(false);
-    setScore(null);
+    setGradeResult(null);
+    setRecordingUri(null);
   };
 
-  const handleResult = () => {
-    navigation.navigate('Result', {
-      level,
-      topic,
-      totalQuestions: total,
-      answeredQuestions: total,
-    });
+  const handleResult = async () => {
+    if (!sessionId) {
+      Alert.alert('Chưa thể xem kết quả', 'Phiên luyện tập chưa sẵn sàng. Vui lòng thử lại.');
+      return;
+    }
+
+    try {
+      const result = await completePracticeSessionFromApi(sessionId);
+
+      navigation.navigate('Result', {
+        level,
+        topic,
+        totalQuestions: result.totalQuestions,
+        answeredQuestions: result.answeredQuestions,
+        averageScore: result.averageScore,
+      });
+    } catch (error) {
+      console.warn('[PracticeScreen] Failed to complete practice session', error);
+      Alert.alert('Lỗi kết quả', 'Hiện chưa thể tổng kết phiên luyện tập. Vui lòng thử lại.');
+    }
   };
 
   const handleChangeTopic = () => {
     navigation.navigate('Topic', { level });
   };
 
-  const handleRecord = () => {
-    Alert.alert('Sắp ra mắt', 'Tính năng ghi âm sẽ được cập nhật sau.');
+  const transcribeRecording = async (audioUri: string) => {
+    setIsTranscribing(true);
+
+    try {
+      const result = await transcribeAudioFromApi(audioUri);
+
+      setUserAnswer(result.text);
+    } catch (error) {
+      console.warn('[PracticeScreen] Failed to transcribe audio', error);
+      Alert.alert(
+        'Lỗi nhận diện giọng nói',
+        'Chưa thể nhận diện giọng nói. Bạn có thể nhập câu trả lời bằng text.',
+      );
+    } finally {
+      setIsTranscribing(false);
+    }
+  };
+
+  const startRecording = async () => {
+    const permission = await AudioModule.requestRecordingPermissionsAsync();
+
+    if (!permission.granted) {
+      Alert.alert('Cần quyền microphone', 'Bạn cần cấp quyền microphone để ghi âm.');
+      return;
+    }
+
+    await setAudioModeAsync({
+      allowsRecording: true,
+      playsInSilentMode: true,
+    });
+
+    await audioRecorder.prepareToRecordAsync();
+    audioRecorder.record();
+
+    setIsRecording(true);
+  };
+
+  const stopRecording = async () => {
+    setIsRecording(false);
+    await audioRecorder.stop();
+    await setAudioModeAsync({ allowsRecording: false });
+
+    const uri = audioRecorder.uri;
+
+    if (!uri) {
+      Alert.alert(
+        'Lỗi ghi âm',
+        'Chưa thể lấy file ghi âm. Bạn có thể nhập câu trả lời bằng text.',
+      );
+      return;
+    }
+
+    setRecordingUri(uri);
+    await transcribeRecording(uri);
+  };
+
+  const handleRecord = async () => {
+    try {
+      if (isRecording) {
+        await stopRecording();
+        return;
+      }
+
+      await startRecording();
+    } catch (error) {
+      console.warn('[PracticeScreen] Failed to handle recording', error);
+      setIsRecording(false);
+      Alert.alert(
+        'Lỗi ghi âm',
+        'Chưa thể nhận diện giọng nói. Bạn có thể nhập câu trả lời bằng text.',
+      );
+    }
   };
 
   return (
@@ -226,6 +393,9 @@ export function PracticeScreen({ navigation, route }: Props) {
 
           <PracticeActions
             hasScored={hasScored}
+            isGrading={isGrading}
+            isRecording={isRecording}
+            isTranscribing={isTranscribing}
             isLastQuestion={isLastQuestion}
             onRecord={handleRecord}
             onToggleHint={() => setShowHint((visible) => !visible)}
@@ -235,13 +405,33 @@ export function PracticeScreen({ navigation, route }: Props) {
             onResult={handleResult}
           />
 
+          {isRecording || isTranscribing ? (
+            <View style={styles.voiceStatus}>
+              {isRecording ? <View style={styles.recordingDot} /> : null}
+              <Text style={styles.voiceStatusText}>
+                {isRecording ? 'Đang ghi âm...' : 'Đang nhận diện giọng nói...'}
+              </Text>
+            </View>
+          ) : null}
+
           {showHint ? (
             <View style={styles.hintBox}>
               <Text style={styles.hintText}>Gợi ý: {currentQuestion.hint_vi}</Text>
             </View>
           ) : null}
 
-          {score !== null ? <ScoreFeedback score={score} /> : null}
+          {gradeResult ? (
+            <ScoreFeedback
+              score={gradeResult.score}
+              shortFeedbackVi={gradeResult.shortFeedbackVi}
+              grammarFeedbackVi={gradeResult.grammarFeedbackVi}
+              vocabularyFeedbackVi={gradeResult.vocabularyFeedbackVi}
+              suggestionVi={gradeResult.suggestionVi}
+              improvedAnswerZh={gradeResult.improvedAnswerZh}
+              improvedAnswerPinyin={gradeResult.improvedAnswerPinyin}
+              improvedAnswerVi={gradeResult.improvedAnswerVi}
+            />
+          ) : null}
         </ScrollView>
       </SafeAreaView>
     </LinearGradient>
@@ -332,5 +522,29 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     fontSize: 13,
     marginTop: 10,
+  },
+  voiceStatus: {
+    alignSelf: 'flex-start',
+    marginHorizontal: 18,
+    marginTop: 10,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(245, 200, 75, 0.28)',
+    backgroundColor: 'rgba(245, 200, 75, 0.08)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  recordingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#F97373',
+  },
+  voiceStatusText: {
+    color: COLORS.textSecondary,
+    fontSize: 13,
   },
 });

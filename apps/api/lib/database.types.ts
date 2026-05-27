@@ -202,6 +202,75 @@ export type Database = {
           },
         ];
       };
+      practice_answers: {
+        Row: {
+          id: string;
+          session_id: string;
+          question_id: string;
+          user_answer_zh: string | null;
+          score: number | null;
+          is_relevant: boolean | null;
+          short_feedback_vi: string | null;
+          grammar_feedback_vi: string | null;
+          vocabulary_feedback_vi: string | null;
+          improved_answer_zh: string | null;
+          improved_answer_pinyin: string | null;
+          improved_answer_vi: string | null;
+          suggestion_vi: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          session_id: string;
+          question_id: string;
+          user_answer_zh?: string | null;
+          score?: number | null;
+          is_relevant?: boolean | null;
+          short_feedback_vi?: string | null;
+          grammar_feedback_vi?: string | null;
+          vocabulary_feedback_vi?: string | null;
+          improved_answer_zh?: string | null;
+          improved_answer_pinyin?: string | null;
+          improved_answer_vi?: string | null;
+          suggestion_vi?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          session_id?: string;
+          question_id?: string;
+          user_answer_zh?: string | null;
+          score?: number | null;
+          is_relevant?: boolean | null;
+          short_feedback_vi?: string | null;
+          grammar_feedback_vi?: string | null;
+          vocabulary_feedback_vi?: string | null;
+          improved_answer_zh?: string | null;
+          improved_answer_pinyin?: string | null;
+          improved_answer_vi?: string | null;
+          suggestion_vi?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'practice_answers_session_id_fkey';
+            columns: ['session_id'];
+            isOneToOne: false;
+            referencedRelation: 'practice_sessions';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'practice_answers_question_id_fkey';
+            columns: ['question_id'];
+            isOneToOne: false;
+            referencedRelation: 'questions';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

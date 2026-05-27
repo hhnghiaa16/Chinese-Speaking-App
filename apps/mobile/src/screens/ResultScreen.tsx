@@ -16,8 +16,7 @@ import { RootStackParamList } from '../types/navigation';
 type Props = NativeStackScreenProps<RootStackParamList, 'Result'>;
 
 export function ResultScreen({ navigation, route }: Props) {
-  const { level, topic, totalQuestions, answeredQuestions } = route.params;
-  const averageScore = 8;
+  const { level, topic, totalQuestions, answeredQuestions, averageScore } = route.params;
 
   const currentTopic = topics.find((item) => item.key === topic);
   const topicVi = currentTopic?.titleVi ?? 'Chủ đề';
