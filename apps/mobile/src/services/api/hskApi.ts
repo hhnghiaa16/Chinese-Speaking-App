@@ -9,6 +9,7 @@ type MobileHskLevel = {
   title: string;
   subtitle: string;
   vocabCount: string;
+  questionCount: number;
   available: boolean;
 };
 
@@ -34,7 +35,8 @@ export async function getHskLevelsFromApi(): Promise<MobileHskLevel[]> {
       title: level.name,
       subtitle: levelSubtitles.get(level.code as HSKLevel) ?? level.description ?? '',
       vocabCount: level.vocabCount ? `~${level.vocabCount} từ` : '~0 từ',
-      available: number <= 2,
+      questionCount: level.questionCount,
+      available: level.questionCount > 0,
     };
   });
 }

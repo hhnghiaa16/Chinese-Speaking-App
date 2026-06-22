@@ -4,6 +4,7 @@ export type HskLevelApiDto = {
   name: string;
   description: string | null;
   vocabCount: number | null;
+  questionCount: number;
   orderIndex: number;
 };
 
@@ -51,5 +52,6 @@ export type ProgressApiDto = {
     topicVi: string;
     questions: number;
     score: number;
+    suggestionVi: string | null;
   };
 };

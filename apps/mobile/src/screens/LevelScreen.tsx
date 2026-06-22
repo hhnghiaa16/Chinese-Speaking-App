@@ -19,6 +19,7 @@ type HskLevel = {
   title: string;
   subtitle: string;
   vocabCount: string;
+  questionCount: number;
   available: boolean;
 };
 
@@ -79,21 +80,29 @@ export function LevelScreen({ navigation }: Props) {
 
           {isLoading ? (
             <View style={styles.loadingState}>
-              <ActivityIndicator color={COLORS.yellow} />
-              <Text style={styles.loadingText}>Đang tải trình độ...</Text>
+              <ActivityIndicator color={COLORS.yellow} size="large" />
+              <Text style={styles.loadingText}>Đang tải lộ trình...</Text>
             </View>
-          ) : null}
-
-          {levels.map((level) => (
-            <LevelCard
-              key={level.key}
-              number={level.number}
-              title={level.title}
-              subtitle={level.subtitle}
-              vocabCount={level.vocabCount}
-              onPress={() => handleSelectLevel(level)}
-            />
-          ))}
+          ) : (
+            levels.map((level) => (
+              <LevelCard
+                key={level.key}
+                number={level.number}
+                title={level.title}
+                subtitle={level.subtitle}
+                vocabCount={level.vocabCount}
+                questionCount={level.questionCount}
+                available={level.available}
+                onPress={() => {
+                  if (level.available) {
+                    navigation.navigate('Topic', { level: level.key });
+                  } else {
+                    Alert.alert('Chưa có dữ liệu', 'Cấp độ này hiện chưa có câu hỏi nào. Vui lòng quay lại sau.');
+                  }
+                }}
+              />
+            ))
+          )}
         </ScrollView>
       </SafeAreaView>
     </LinearGradient>

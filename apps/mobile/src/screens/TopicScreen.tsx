@@ -25,7 +25,7 @@ export function TopicScreen({ navigation, route }: Props) {
 
     async function loadTopics() {
       try {
-        const apiTopics = await getTopicsFromApi();
+        const apiTopics = await getTopicsFromApi(level);
 
         if (isMounted) {
           setAvailableTopics(apiTopics);
@@ -64,26 +64,28 @@ export function TopicScreen({ navigation, route }: Props) {
 
           {isLoading ? (
             <View style={styles.loadingState}>
-              <ActivityIndicator color={COLORS.yellow} />
+              <ActivityIndicator color={COLORS.yellow} size="large" />
               <Text style={styles.loadingText}>Đang tải chủ đề...</Text>
             </View>
-          ) : null}
-
-          {availableTopics.map((topic) => (
-            <TopicCard
-              key={topic.key}
-              emoji={topic.emoji}
-              titleZh={topic.titleZh}
-              titleVi={topic.titleVi}
-              description={topic.description}
-              onPress={() =>
-                navigation.navigate('Practice', {
-                  level,
-                  topic: topic.key,
-                })
-              }
-            />
-          ))}
+          ) : (
+            availableTopics.map((topic) => (
+              <TopicCard
+                key={topic.key}
+                emoji={topic.emoji}
+                titleZh={topic.titleZh}
+                titleVi={topic.titleVi}
+                description={topic.description}
+                onPress={() =>
+                  navigation.navigate('ModeSelect', {
+                    level,
+                    topic: topic.key,
+                    topicVi: topic.titleVi,
+                    topicEmoji: topic.emoji ?? '',
+                  })
+                }
+              />
+            ))
+          )}
         </ScrollView>
       </SafeAreaView>
     </LinearGradient>

@@ -15,6 +15,8 @@ type PracticeQuestionCardProps = {
   onSpeakQuestion: () => void;
   onSpeakSample?: () => void;
   showSample?: boolean;
+  isSpeakingQuestion?: boolean;
+  isSpeakingSample?: boolean;
 };
 
 export function PracticeQuestionCard({
@@ -27,12 +29,18 @@ export function PracticeQuestionCard({
   onSpeakQuestion,
   onSpeakSample,
   showSample,
+  isSpeakingQuestion,
+  isSpeakingSample,
 }: PracticeQuestionCardProps) {
   return (
     <View style={styles.card}>
       <View style={styles.questionRow}>
         <Text style={styles.questionZh}>{questionZh}</Text>
-        <Pressable style={styles.speakerButton} onPress={onSpeakQuestion}>
+        <Pressable
+          style={[styles.speakerButton, isSpeakingQuestion ? styles.disabledButton : null]}
+          onPress={onSpeakQuestion}
+          disabled={isSpeakingQuestion}
+        >
           <Volume2 color={COLORS.textPrimary} size={16} strokeWidth={1.8} />
         </Pressable>
       </View>
@@ -46,6 +54,7 @@ export function PracticeQuestionCard({
           answerPinyin={sampleAnswerPinyin}
           answerVi={sampleAnswerVi}
           onSpeak={onSpeakSample}
+          isSpeaking={isSpeakingSample}
         />
       ) : null}
     </View>
@@ -85,6 +94,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(5, 3, 22, 0.25)',
+  },
+  disabledButton: {
+    opacity: 0.45,
   },
   pinyin: {
     marginTop: 18,

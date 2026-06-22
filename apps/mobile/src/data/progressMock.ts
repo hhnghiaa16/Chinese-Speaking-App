@@ -41,5 +41,6 @@ export const progressMock = {
     topicVi: 'Ăn uống',
     questions: 2,
     score: 8.0,
+    suggestionVi: 'Bạn có thể thử dùng thêm một số từ nối đơn giản như "然后" (sau đó) hoặc "因为" (bởi vì) để câu dài hơn nhé.',
   },
 };

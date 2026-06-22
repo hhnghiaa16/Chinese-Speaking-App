@@ -1,7 +1,7 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { HomeHeader } from '../components/home/HomeHeader';
@@ -14,42 +14,41 @@ import { StatsGrid } from '../components/progress/StatsGrid';
 import { progressMock } from '../data/progressMock';
 import { getProgressFromApi } from '../services/api/progressApi';
 import { COLORS } from '../theme/colors';
+import { ProgressApiDto } from '../services/api/types';
 import { RootStackParamList } from '../types/navigation';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Progress'>;
-type ProgressData = typeof progressMock;
 
 export function ProgressScreen({ navigation }: Props) {
-  const [progress, setProgress] = useState<ProgressData>(progressMock);
+  const [progress, setProgress] = useState<ProgressApiDto>(progressMock as ProgressApiDto);
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadProgress = useCallback(async () => {
+    try {
+      const apiProgress = await getProgressFromApi();
+      setProgress(apiProgress);
+    } catch {
+      setProgress(progressMock as ProgressApiDto);
+    }
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
-
-    async function loadProgress() {
-      try {
-        const apiProgress = await getProgressFromApi();
-
-        if (isMounted) {
-          setProgress(apiProgress);
-        }
-      } catch {
-        if (isMounted) {
-          setProgress(progressMock);
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    }
-
-    void loadProgress();
-
+    setIsLoading(true);
+    loadProgress().finally(() => {
+      if (isMounted) setIsLoading(false);
+    });
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [loadProgress]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadProgress();
+    setRefreshing(false);
+  }, [loadProgress]);
 
   return (
     <LinearGradient colors={['#050316', '#08051F', '#050316']} style={styles.container}>
@@ -62,15 +61,24 @@ export function ProgressScreen({ navigation }: Props) {
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => void onRefresh()}
+              tintColor={COLORS.yellow}
+              colors={[COLORS.yellow]}
+            />
+          }
         >
           <ProgressHero />
 
-          {isLoading ? (
+          {isLoading && !refreshing ? (
             <View style={styles.loadingState}>
-              <ActivityIndicator color={COLORS.yellow} />
-              <Text style={styles.loadingText}>Đang tải tiến độ...</Text>
+              <ActivityIndicator color={COLORS.yellow} size="large" />
+              <Text style={styles.loadingText}>Đang đồng bộ dữ liệu tiến độ...</Text>
             </View>
-          ) : null}
+          ) : (
+            <View style={isLoading ? { opacity: 0.5 } : undefined}>
 
           <StatsGrid
             totalSessions={progress.totalSessions}
@@ -92,9 +100,12 @@ export function ProgressScreen({ navigation }: Props) {
           <RecommendationCard
             level={progress.recentPractice.level}
             topicVi={progress.recentPractice.topicVi}
+            suggestionVi={progress.recentPractice.suggestionVi}
           />
 
           <ProgressCTA onPress={() => navigation.navigate('Level')} />
+          </View>
+          )}
         </ScrollView>
       </SafeAreaView>
     </LinearGradient>

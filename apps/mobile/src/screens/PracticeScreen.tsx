@@ -7,10 +7,12 @@ import {
 } from 'expo-audio';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Speech from 'expo-speech';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -21,8 +23,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { HomeHeader } from '../components/home/HomeHeader';
 import { AnswerInputCard } from '../components/practice/AnswerInputCard';
+import { PlaybackControls } from '../components/practice/PlaybackControls';
 import { PracticeActions } from '../components/practice/PracticeActions';
 import { PracticeMetaBar } from '../components/practice/PracticeMetaBar';
+import { RecordingWaveform } from '../components/practice/RecordingWaveform';
 import { PracticeProgressBar } from '../components/practice/PracticeProgressBar';
 import { PracticeQuestionCard } from '../components/practice/PracticeQuestionCard';
 import { ScoreFeedback } from '../components/practice/ScoreFeedback';
@@ -35,9 +39,11 @@ import {
   transcribeAudioFromApi,
 } from '../services/api/practiceApi';
 import { getQuestionsFromApi, MobilePracticeQuestion } from '../services/api/questionsApi';
+import { synthesizeSpeechFromApi } from '../services/api/ttsApi';
 import { COLORS } from '../theme/colors';
 import { serifFont } from '../theme/typography';
 import { RootStackParamList } from '../types/navigation';
+import { playBase64Audio } from '../utils/audioPlayer';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Practice'>;
 
@@ -45,6 +51,11 @@ type PracticeAnswer = {
   questionId: string;
   userAnswer: string;
   score: number;
+};
+
+type TtsAudioCacheEntry = {
+  audioBase64: string;
+  mimeType: string;
 };
 
 export function PracticeScreen({ navigation, route }: Props) {
@@ -61,10 +72,13 @@ export function PracticeScreen({ navigation, route }: Props) {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingUri, setRecordingUri] = useState<string | null>(null);
   const [isTranscribing, setIsTranscribing] = useState(false);
+  const [isSpeakingQuestion, setIsSpeakingQuestion] = useState(false);
+  const [isSpeakingSample, setIsSpeakingSample] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [practiceQuestions, setPracticeQuestions] = useState<
     Array<PracticeQuestion | MobilePracticeQuestion>
   >([]);
+  const ttsCacheRef = useRef<Record<string, TtsAudioCacheEntry>>({});
   const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
 
   useEffect(() => {
@@ -188,12 +202,48 @@ export function PracticeScreen({ navigation, route }: Props) {
   const total = practiceQuestions.length;
   const isLastQuestion = currentIndex === total - 1;
 
+  const handleSpeakWithTts = async (text: string, type: 'question' | 'sample') => {
+    const trimmedText = text.trim();
+    const language = 'zh-CN';
+    const voice = 'default';
+    const cacheKey = `${language}:${voice}:${trimmedText}`;
+
+    if (!trimmedText || isSpeakingQuestion || isSpeakingSample) {
+      return;
+    }
+
+    const setSpeaking = type === 'question' ? setIsSpeakingQuestion : setIsSpeakingSample;
+
+    setSpeaking(true);
+
+    try {
+      const cachedAudio = ttsCacheRef.current[cacheKey];
+      const audio =
+        cachedAudio ??
+        (await synthesizeSpeechFromApi({
+          text: trimmedText,
+          language,
+          voice,
+        }));
+
+      if (!cachedAudio) {
+        ttsCacheRef.current[cacheKey] = audio;
+      }
+
+      await playBase64Audio(audio);
+    } catch {
+      Speech.speak(trimmedText, { language: 'zh-CN', rate: 0.85 });
+    } finally {
+      setSpeaking(false);
+    }
+  };
+
   const handleSpeakQuestion = () => {
-    Speech.speak(currentQuestion.question_zh, { language: 'zh-CN' });
+    void handleSpeakWithTts(currentQuestion.question_zh, 'question');
   };
 
   const handleSpeakSample = () => {
-    Speech.speak(currentQuestion.sample_answer_zh, { language: 'zh-CN' });
+    void handleSpeakWithTts(currentQuestion.sample_answer_zh, 'sample');
   };
 
   const handleScore = async () => {
@@ -269,6 +319,7 @@ export function PracticeScreen({ navigation, route }: Props) {
         totalQuestions: result.totalQuestions,
         answeredQuestions: result.answeredQuestions,
         averageScore: result.averageScore,
+        suggestionVi: gradeResult?.suggestionVi,
       });
     } catch (error) {
       console.warn('[PracticeScreen] Failed to complete practice session', error);
@@ -362,77 +413,91 @@ export function PracticeScreen({ navigation, route }: Props) {
 
         <HomeHeader activeTab="practice" />
 
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
-          <PracticeMetaBar
-            level={level}
-            topicEmoji={currentQuestion.topicEmoji}
-            topicVi={currentQuestion.topicVi}
-            current={current}
-            total={total}
-            onChangeTopic={handleChangeTopic}
-          />
-
-          <PracticeProgressBar current={current} total={total} />
-
-          <PracticeQuestionCard
-            questionZh={currentQuestion.question_zh}
-            pinyin={currentQuestion.pinyin}
-            meaningVi={currentQuestion.meaning_vi}
-            sampleAnswerZh={currentQuestion.sample_answer_zh}
-            sampleAnswerPinyin={currentQuestion.sample_answer_pinyin}
-            sampleAnswerVi={currentQuestion.sample_answer_vi}
-            showSample={showSample}
-            onSpeakQuestion={handleSpeakQuestion}
-            onSpeakSample={handleSpeakSample}
-          />
-
-          <AnswerInputCard value={userAnswer} onChangeText={setUserAnswer} />
-
-          <PracticeActions
-            hasScored={hasScored}
-            isGrading={isGrading}
-            isRecording={isRecording}
-            isTranscribing={isTranscribing}
-            isLastQuestion={isLastQuestion}
-            onRecord={handleRecord}
-            onToggleHint={() => setShowHint((visible) => !visible)}
-            onToggleSample={() => setShowSample((visible) => !visible)}
-            onScore={handleScore}
-            onNext={handleNext}
-            onResult={handleResult}
-          />
-
-          {isRecording || isTranscribing ? (
-            <View style={styles.voiceStatus}>
-              {isRecording ? <View style={styles.recordingDot} /> : null}
-              <Text style={styles.voiceStatusText}>
-                {isRecording ? 'Đang ghi âm...' : 'Đang nhận diện giọng nói...'}
-              </Text>
-            </View>
-          ) : null}
-
-          {showHint ? (
-            <View style={styles.hintBox}>
-              <Text style={styles.hintText}>Gợi ý: {currentQuestion.hint_vi}</Text>
-            </View>
-          ) : null}
-
-          {gradeResult ? (
-            <ScoreFeedback
-              score={gradeResult.score}
-              shortFeedbackVi={gradeResult.shortFeedbackVi}
-              grammarFeedbackVi={gradeResult.grammarFeedbackVi}
-              vocabularyFeedbackVi={gradeResult.vocabularyFeedbackVi}
-              suggestionVi={gradeResult.suggestionVi}
-              improvedAnswerZh={gradeResult.improvedAnswerZh}
-              improvedAnswerPinyin={gradeResult.improvedAnswerPinyin}
-              improvedAnswerVi={gradeResult.improvedAnswerVi}
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+          >
+            <PracticeMetaBar
+              level={level}
+              topicEmoji={currentQuestion.topicEmoji}
+              topicVi={currentQuestion.topicVi}
+              current={current}
+              total={total}
+              onChangeTopic={handleChangeTopic}
             />
-          ) : null}
-        </ScrollView>
+
+            <PracticeProgressBar current={current} total={total} />
+
+            <PracticeQuestionCard
+              questionZh={currentQuestion.question_zh}
+              pinyin={currentQuestion.pinyin}
+              meaningVi={currentQuestion.meaning_vi}
+              sampleAnswerZh={currentQuestion.sample_answer_zh}
+              sampleAnswerPinyin={currentQuestion.sample_answer_pinyin}
+              sampleAnswerVi={currentQuestion.sample_answer_vi}
+              showSample={showSample}
+              onSpeakQuestion={handleSpeakQuestion}
+              onSpeakSample={handleSpeakSample}
+              isSpeakingQuestion={isSpeakingQuestion}
+              isSpeakingSample={isSpeakingSample}
+            />
+
+            <AnswerInputCard value={userAnswer} onChangeText={setUserAnswer} />
+
+            {recordingUri && !isRecording && !isTranscribing ? (
+              <PlaybackControls uri={recordingUri} />
+            ) : null}
+
+            {isRecording ? (
+              <RecordingWaveform isRecording={isRecording} onStop={handleRecord} />
+            ) : (
+              <PracticeActions
+                hasScored={hasScored}
+                isGrading={isGrading}
+                isRecording={isRecording}
+                isTranscribing={isTranscribing}
+                isLastQuestion={isLastQuestion}
+                hasRecording={!!recordingUri}
+                onRecord={handleRecord}
+                onToggleHint={() => setShowHint((visible) => !visible)}
+                onToggleSample={() => setShowSample((visible) => !visible)}
+                onScore={handleScore}
+                onNext={handleNext}
+                onResult={handleResult}
+              />
+            )}
+
+            {isTranscribing ? (
+              <View style={styles.voiceStatus}>
+                <Text style={styles.voiceStatusText}>Đang nhận diện giọng nói...</Text>
+              </View>
+            ) : null}
+
+            {showHint ? (
+              <View style={styles.hintBox}>
+                <Text style={styles.hintText}>Gợi ý: {currentQuestion.hint_vi}</Text>
+              </View>
+            ) : null}
+
+            {gradeResult ? (
+              <ScoreFeedback
+                score={gradeResult.score}
+                shortFeedbackVi={gradeResult.shortFeedbackVi}
+                grammarFeedbackVi={gradeResult.grammarFeedbackVi}
+                vocabularyFeedbackVi={gradeResult.vocabularyFeedbackVi}
+                suggestionVi={gradeResult.suggestionVi}
+                improvedAnswerZh={gradeResult.improvedAnswerZh}
+                improvedAnswerPinyin={gradeResult.improvedAnswerPinyin}
+                improvedAnswerVi={gradeResult.improvedAnswerVi}
+              />
+            ) : null}
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </LinearGradient>
   );

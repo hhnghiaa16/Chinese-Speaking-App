@@ -8,6 +8,7 @@ type SampleAnswerBoxProps = {
   answerPinyin: string;
   answerVi: string;
   onSpeak?: () => void;
+  isSpeaking?: boolean;
 };
 
 export function SampleAnswerBox({
@@ -15,6 +16,7 @@ export function SampleAnswerBox({
   answerPinyin,
   answerVi,
   onSpeak,
+  isSpeaking,
 }: SampleAnswerBoxProps) {
   return (
     <View style={styles.container}>
@@ -22,7 +24,12 @@ export function SampleAnswerBox({
 
       <View style={styles.answerRow}>
         <Text style={styles.answerZh}>{answerZh}</Text>
-        <Pressable hitSlop={8} onPress={onSpeak}>
+        <Pressable
+          hitSlop={8}
+          onPress={onSpeak}
+          disabled={isSpeaking}
+          style={isSpeaking ? styles.disabledButton : null}
+        >
           <Volume2 color={COLORS.textSecondary} size={14} strokeWidth={1.8} />
         </Pressable>
       </View>
@@ -72,5 +79,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontStyle: 'italic',
     marginTop: 2,
+  },
+  disabledButton: {
+    opacity: 0.45,
   },
 });

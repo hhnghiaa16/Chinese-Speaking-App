@@ -6,16 +6,17 @@ import { serifFont } from '../../theme/typography';
 type RecommendationCardProps = {
   topicVi: string;
   level: string;
+  suggestionVi?: string | null;
 };
 
-export function RecommendationCard({ topicVi, level }: RecommendationCardProps) {
+export function RecommendationCard({ topicVi, level, suggestionVi }: RecommendationCardProps) {
   return (
     <View style={styles.card}>
       <Text style={styles.icon}>💡</Text>
       <Text style={styles.title}>Gợi ý tiếp theo</Text>
       <Text style={styles.description}>
-        Bạn nên tiếp tục {level} - {topicVi} để phản xạ ổn định hơn trước khi chuyển sang chủ
-        đề mới.
+        {suggestionVi ||
+          `Bạn nên tiếp tục ${level} - ${topicVi} để phản xạ ổn định hơn trước khi chuyển sang chủ đề mới.`}
       </Text>
     </View>
   );

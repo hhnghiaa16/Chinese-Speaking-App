@@ -10,8 +10,9 @@ export type MobileTopic = {
   description: string;
 };
 
-export async function getTopicsFromApi(): Promise<MobileTopic[]> {
-  const topics = await apiGet<TopicApiDto[]>('/api/topics');
+export async function getTopicsFromApi(level?: string): Promise<MobileTopic[]> {
+  const url = level ? `/api/topics?level=${level}` : '/api/topics';
+  const topics = await apiGet<TopicApiDto[]>(url);
 
   return topics.map((topic) => ({
     key: topic.key as TopicKey,

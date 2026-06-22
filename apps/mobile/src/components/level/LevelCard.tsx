@@ -8,6 +8,8 @@ type LevelCardProps = {
   title: string;
   subtitle: string;
   vocabCount: string;
+  questionCount: number;
+  available: boolean;
   onPress: () => void;
 };
 
@@ -16,11 +18,13 @@ export function LevelCard({
   title,
   subtitle,
   vocabCount,
+  questionCount,
+  available,
   onPress,
 }: LevelCardProps) {
   return (
     <Pressable
-      style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+      style={({ pressed }) => [styles.card, pressed && styles.cardPressed, !available && styles.cardDisabled]}
       onPress={onPress}
     >
       <View style={styles.topRow}>
@@ -32,8 +36,15 @@ export function LevelCard({
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.subtitle}>{subtitle}</Text>
 
-        <View style={styles.vocabPill}>
-          <Text style={styles.vocabText}>{vocabCount}</Text>
+        <View style={styles.pillContainer}>
+          <View style={styles.vocabPill}>
+            <Text style={styles.vocabText}>{vocabCount}</Text>
+          </View>
+          <View style={[styles.vocabPill, !available && styles.emptyPill]}>
+            <Text style={[styles.vocabText, !available && styles.emptyText]}>
+              {available ? `${questionCount} câu hỏi` : 'Chưa có câu hỏi'}
+            </Text>
+          </View>
         </View>
       </View>
     </Pressable>
@@ -53,6 +64,10 @@ const styles = StyleSheet.create({
   },
   cardPressed: {
     opacity: 0.85,
+  },
+  cardDisabled: {
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(11, 8, 36, 0.4)',
   },
   topRow: {
     flexDirection: 'row',
@@ -82,17 +97,27 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     fontSize: 12,
   },
+  pillContainer: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 18,
+  },
   vocabPill: {
-    alignSelf: 'flex-start',
     borderWidth: 1,
     borderColor: COLORS.cardBorder,
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 5,
-    marginTop: 18,
   },
   vocabText: {
     color: COLORS.textSecondary,
     fontSize: 11,
+  },
+  emptyPill: {
+    borderColor: 'rgba(255, 75, 75, 0.3)',
+    backgroundColor: 'rgba(255, 75, 75, 0.1)',
+  },
+  emptyText: {
+    color: '#FF4B4B',
   },
 });

@@ -1,5 +1,21 @@
 import { apiPost, getApiUrl } from './apiClient';
 
+export type GeneratedQuestionDto = {
+  questionZh: string;
+  questionPinyin: string;
+  questionVi: string;
+  hintVi: string;
+};
+
+export type AiGradeInput = {
+  level: string;
+  topicVi: string;
+  questionZh: string;
+  questionPinyin: string;
+  questionVi: string;
+  userAnswerZh: string;
+};
+
 export type PracticeSessionApiDto = {
   sessionId: string;
   level: string;
@@ -101,4 +117,26 @@ export async function transcribeAudioFromApi(audioUri: string): Promise<Transcri
 
     request.send(formData);
   });
+}
+
+export async function generateQuestionFromApi(
+  level: string,
+  topic: string,
+  topicVi: string,
+  excludeQuestions: string[],
+  previousFeedback?: string,
+): Promise<GeneratedQuestionDto> {
+  return apiPost<GeneratedQuestionDto>('/api/ai/generate-question', {
+    level,
+    topic,
+    topicVi,
+    excludeQuestions,
+    previousFeedback,
+  });
+}
+
+export async function gradeWithAiInline(
+  input: AiGradeInput,
+): Promise<GradeAnswerApiDto> {
+  return apiPost<GradeAnswerApiDto>('/api/ai/grade', input);
 }

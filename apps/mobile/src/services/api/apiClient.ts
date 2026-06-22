@@ -1,3 +1,5 @@
+import { supabase } from '../auth/supabaseClient';
+
 type ApiSuccessResponse<T> = {
   data: T;
 };
@@ -23,8 +25,16 @@ async function apiRequest<T>(path: string, init: RequestInit): Promise<T> {
   const timeout = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
 
   try {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    const headers = new Headers(init.headers);
+    if (session?.access_token) {
+      headers.set('Authorization', `Bearer ${session.access_token}`);
+    }
+
     const response = await fetch(getApiUrl(path), {
       ...init,
+      headers,
       signal: controller.signal,
     });
 
@@ -53,6 +63,16 @@ export async function apiGet<T>(path: string): Promise<T> {
 export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
   return apiRequest<T>(path, {
     method: 'POST',
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+    },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+}
+
+export async function apiPut<T>(path: string, body?: unknown): Promise<T> {
+  return apiRequest<T>(path, {
+    method: 'PUT',
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
     },

@@ -9,6 +9,7 @@ type PracticeActionsProps = {
   isRecording: boolean;
   isTranscribing: boolean;
   isLastQuestion: boolean;
+  hasRecording?: boolean;
   onRecord: () => void;
   onToggleHint: () => void;
   onToggleSample: () => void;
@@ -23,6 +24,7 @@ export function PracticeActions({
   isRecording,
   isTranscribing,
   isLastQuestion,
+  hasRecording = false,
   onRecord,
   onToggleHint,
   onToggleSample,
@@ -54,7 +56,7 @@ export function PracticeActions({
       >
         <Mic color={COLORS.white} size={15} strokeWidth={1.8} />
         <Text style={[styles.buttonText, styles.primaryText]}>
-          {isRecording ? 'Dừng ghi' : 'Ghi âm'}
+          {isRecording ? 'Dừng ghi' : hasRecording ? 'Ghi lại' : 'Ghi âm'}
         </Text>
       </Pressable>
 

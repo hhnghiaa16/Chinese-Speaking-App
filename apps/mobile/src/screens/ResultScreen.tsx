@@ -57,7 +57,7 @@ export function ResultScreen({ navigation, route }: Props) {
             totalQuestions={totalQuestions}
           />
 
-          <NextSuggestionCard />
+          <NextSuggestionCard suggestionVi={route.params.suggestionVi} />
 
           <ResultActions
             onRetry={handleRetry}

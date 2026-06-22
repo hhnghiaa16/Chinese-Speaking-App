@@ -15,16 +15,17 @@ Create `apps/api/.env` from `apps/api/.env.example`:
 ```env
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=replace-with-service-role-key
-DEEPGRAM_API_KEY=replace-with-deepgram-api-key
-GEMINI_GRADING_API_KEY=replace-with-gemini-grading-api-key
-GEMINI_GRADING_MODEL=replace-with-gemini-grading-model
-GEMINI_QUESTION_API_KEY=replace-with-gemini-question-api-key
-GEMINI_QUESTION_MODEL=replace-with-gemini-question-model
-PORT=3000
 CORS_ORIGIN=*
+
+OPENAI_API_KEY=replace-with-openai-api-key
+OPENAI_STT_MODEL=gpt-4o-mini-transcribe
+OPENAI_TTS_MODEL=gpt-4o-mini-tts
+OPENAI_GRADING_MODEL=gpt-4o-mini
+
+PORT=3000
 ```
 
-`SUPABASE_SERVICE_ROLE_KEY`, `DEEPGRAM_API_KEY`, `GEMINI_GRADING_API_KEY`, and `GEMINI_QUESTION_API_KEY` must stay only in the backend.
+`SUPABASE_SERVICE_ROLE_KEY` and `OPENAI_API_KEY` must stay only in the backend — never expose them to the mobile app.
 
 ## 3. Configure mobile env
 
@@ -72,12 +73,17 @@ Health check:
 http://localhost:3000/api/health
 ```
 
-Available data endpoints:
+Available endpoints:
 
 ```txt
-GET http://localhost:3000/api/hsk-levels
-GET http://localhost:3000/api/topics
-GET http://localhost:3000/api/questions?level=HSK1&topic=food
+GET  http://localhost:3000/api/hsk-levels
+GET  http://localhost:3000/api/topics
+GET  http://localhost:3000/api/questions?level=HSK1&topic=food
+POST http://localhost:3000/api/practice/sessions
+POST http://localhost:3000/api/practice/grade
+POST http://localhost:3000/api/practice/transcribe
+POST http://localhost:3000/api/practice/tts
+GET  http://localhost:3000/api/progress
 ```
 
 ## 5. Run the Expo mobile app
@@ -145,16 +151,14 @@ npm.cmd run mobile
 - Make sure phone and computer are on the same Wi-Fi.
 - Make sure firewall allows port `3000`.
 
-### API returns Supabase env error
+### API returns env error
 
-Check `apps/api/.env`:
+Check `apps/api/.env` has all required keys:
 
 ```env
 SUPABASE_URL=...
 SUPABASE_SERVICE_ROLE_KEY=...
-DEEPGRAM_API_KEY=...
-GEMINI_GRADING_API_KEY=...
-GEMINI_QUESTION_API_KEY=...
+OPENAI_API_KEY=...
 ```
 
 Restart `npm run api` after changing env files.
@@ -162,3 +166,7 @@ Restart `npm run api` after changing env files.
 ### Questions endpoint returns empty data
 
 Run the SQL schema and seed data from `HANAPP_BACKEND_ROADMAP.md` in Supabase SQL Editor first.
+
+### TTS sounds robotic or slow
+
+The default voice is `alloy`. You can set a different OpenAI TTS voice via the `voice` field in the request body. Available voices: `alloy`, `echo`, `fable`, `onyx`, `nova`, `shimmer`.

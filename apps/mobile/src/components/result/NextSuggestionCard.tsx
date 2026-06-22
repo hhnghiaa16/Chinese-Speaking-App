@@ -3,14 +3,18 @@ import { StyleSheet, Text, View } from 'react-native';
 import { COLORS } from '../../theme/colors';
 import { serifFont } from '../../theme/typography';
 
-export function NextSuggestionCard() {
+type Props = {
+  suggestionVi?: string;
+};
+
+export function NextSuggestionCard({ suggestionVi }: Props) {
   return (
     <View style={styles.card}>
       <Text style={styles.icon}>💡</Text>
       <Text style={styles.title}>Gợi ý tiếp theo</Text>
       <Text style={styles.description}>
-        Hãy luyện lại chủ đề này thêm 1–2 lần để phản xạ nhanh hơn trước khi chuyển sang chủ đề
-        mới.
+        {suggestionVi ||
+          'Hãy luyện lại chủ đề này thêm 1–2 lần để phản xạ nhanh hơn trước khi chuyển sang chủ đề mới.'}
       </Text>
     </View>
   );
