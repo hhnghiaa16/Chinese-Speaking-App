@@ -1,11 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { verifyAuthToken } from '@/lib/auth';
 import { HttpError } from '@/lib/http';
 import { gradePracticeAnswer } from '@/services/practice.service';
 import { ApiErrorResponse, ApiSuccessResponse } from '@/types/api';
 import { GradePracticeAnswerBody, GradePracticeAnswerDto } from '@/types/practice';
 
 export async function POST(request: NextRequest) {
+  const userId = await verifyAuthToken(request);
+  if (!userId) {
+    return NextResponse.json<ApiErrorResponse>(
+      { error: 'Unauthorized' },
+      { status: 401 }
+    );
+  }
+
   let body: GradePracticeAnswerBody;
 
   try {
@@ -30,6 +39,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const data = await gradePracticeAnswer({
+      userId,
       sessionId: body.sessionId,
       questionId: body.questionId,
       userAnswerZh: body.userAnswerZh,

@@ -21,4 +21,4 @@ export type GradeAnswerResult = {
   suggestionVi: string;
 };
 
-export type AiProvider = 'gemini';
+export type AiProvider = 'openai';

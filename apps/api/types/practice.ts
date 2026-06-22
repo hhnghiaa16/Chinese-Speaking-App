@@ -4,6 +4,7 @@ export type CreatePracticeSessionBody = {
 };
 
 export type CreatePracticeSessionInput = {
+  userId: string;
   level: string;
   topic: string;
 };
@@ -23,6 +24,7 @@ export type GradePracticeAnswerBody = {
 };
 
 export type GradePracticeAnswerInput = {
+  userId: string;
   sessionId: string;
   questionId: string;
   userAnswerZh: string;

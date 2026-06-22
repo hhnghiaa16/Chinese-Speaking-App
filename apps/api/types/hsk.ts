@@ -4,5 +4,6 @@ export type HskLevelDto = {
   name: string;
   description: string | null;
   vocabCount: number | null;
+  questionCount: number;
   orderIndex: number;
 };

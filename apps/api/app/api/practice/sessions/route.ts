@@ -1,11 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { verifyAuthToken } from '@/lib/auth';
 import { HttpError } from '@/lib/http';
 import { createPracticeSession } from '@/services/practice.service';
 import { ApiErrorResponse, ApiSuccessResponse } from '@/types/api';
 import { CreatePracticeSessionBody, PracticeSessionDto } from '@/types/practice';
 
 export async function POST(request: NextRequest) {
+  const userId = await verifyAuthToken(request);
+  if (!userId) {
+    return NextResponse.json<ApiErrorResponse>(
+      { error: 'Unauthorized' },
+      { status: 401 }
+    );
+  }
+
   let body: CreatePracticeSessionBody;
 
   try {
@@ -26,6 +35,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const data = await createPracticeSession({
+      userId,
       level: body.level,
       topic: body.topic,
     });

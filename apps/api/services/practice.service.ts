@@ -18,6 +18,7 @@ export async function createPracticeSession(
 ): Promise<PracticeSessionDto> {
   const level = input.level.trim();
   const topic = input.topic.trim();
+  const userId = input.userId;
 
   if (!level || !topic) {
     throw new HttpError('Missing required fields: level and topic', 400);
@@ -58,14 +59,16 @@ export async function createPracticeSession(
     throw new Error(countError.message);
   }
 
+  const sessionQuestionsCount = Math.min(totalQuestions ?? 0, 5);
+
   const startedAt = new Date().toISOString();
   const { data: session, error: insertError } = await supabaseAdmin
     .from('practice_sessions')
     .insert({
-      user_id: null,
+      user_id: userId,
       hsk_level_id: hskLevel.id,
       topic_id: topicRow.id,
-      total_questions: totalQuestions ?? 0,
+      total_questions: sessionQuestionsCount,
       answered_questions: 0,
       average_score: null,
       started_at: startedAt,
@@ -92,6 +95,7 @@ export async function gradePracticeAnswer(
   const sessionId = input.sessionId.trim();
   const questionId = input.questionId.trim();
   const userAnswerZh = input.userAnswerZh.trim();
+  const userId = input.userId;
 
   if (!sessionId || !questionId || !userAnswerZh) {
     throw new HttpError('Missing required fields: sessionId, questionId and userAnswerZh', 400);
@@ -101,6 +105,7 @@ export async function gradePracticeAnswer(
     .from('practice_sessions')
     .select('id')
     .eq('id', sessionId)
+    .eq('user_id', userId)
     .maybeSingle();
 
   if (sessionError) {
@@ -108,7 +113,7 @@ export async function gradePracticeAnswer(
   }
 
   if (!session) {
-    throw new HttpError('Practice session not found', 404);
+    throw new HttpError('Practice session not found or unauthorized', 404);
   }
 
   const { data: question, error: questionError } = await supabaseAdmin
@@ -195,6 +200,7 @@ export async function gradePracticeAnswer(
 
 export async function completePracticeSession(
   sessionIdInput: string,
+  userId: string,
 ): Promise<CompletePracticeSessionDto> {
   const sessionId = sessionIdInput.trim();
 
@@ -206,6 +212,7 @@ export async function completePracticeSession(
     .from('practice_sessions')
     .select('id, total_questions')
     .eq('id', sessionId)
+    .eq('user_id', userId)
     .maybeSingle();
 
   if (sessionError) {
@@ -213,7 +220,7 @@ export async function completePracticeSession(
   }
 
   if (!session) {
-    throw new HttpError('Practice session not found', 404);
+    throw new HttpError('Practice session not found or unauthorized', 404);
   }
 
   const { data: answers, error: answersError } = await supabaseAdmin

@@ -1,13 +1,9 @@
 import { GradeAnswerInput, GradeAnswerResult } from './ai.types';
-import { buildGradingPrompt } from './gradingPrompt';
+import { buildGradingUserPrompt, GRADING_SYSTEM_PROMPT } from './gradingPrompt';
 import { parseStrictJsonFromAi } from './jsonParser';
-import { generateGeminiText } from './providers/gemini.provider';
+import { generateOpenAiText } from './providers/openai.provider';
 
-const DEFAULT_GRADING_GEMINI_MODEL = 'gemini-2.0-flash';
-
-function getAiProvider() {
-  return process.env.AI_PROVIDER || 'gemini';
-}
+const DEFAULT_OPENAI_GRADING_MODEL = 'gpt-4o-mini';
 
 function getRequiredEnv(name: string) {
   const value = process.env[name];
@@ -19,10 +15,10 @@ function getRequiredEnv(name: string) {
   return value;
 }
 
-function getGeminiGradingConfig() {
+function getOpenAiGradingConfig() {
   return {
-    apiKey: getRequiredEnv('GEMINI_GRADING_API_KEY'),
-    model: process.env.GEMINI_GRADING_MODEL || DEFAULT_GRADING_GEMINI_MODEL,
+    apiKey: getRequiredEnv('OPENAI_API_KEY'),
+    model: process.env.OPENAI_GRADING_MODEL || DEFAULT_OPENAI_GRADING_MODEL,
     temperature: 0.2,
   };
 }
@@ -30,14 +26,11 @@ function getGeminiGradingConfig() {
 export async function gradeAnswerWithAi(
   input: GradeAnswerInput,
 ): Promise<GradeAnswerResult> {
-  const prompt = buildGradingPrompt(input);
-  const provider = getAiProvider();
+  const systemPrompt = GRADING_SYSTEM_PROMPT;
+  const userPrompt = buildGradingUserPrompt(input);
+  const config = getOpenAiGradingConfig();
 
-  if (provider === 'gemini') {
-    const rawText = await generateGeminiText(prompt, getGeminiGradingConfig());
+  const rawText = await generateOpenAiText(systemPrompt, userPrompt, config);
 
-    return parseStrictJsonFromAi(rawText);
-  }
-
-  throw new Error('Unsupported AI provider');
+  return parseStrictJsonFromAi(rawText);
 }

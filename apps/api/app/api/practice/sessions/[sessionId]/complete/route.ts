@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { verifyAuthToken } from '@/lib/auth';
 import { HttpError } from '@/lib/http';
 import { completePracticeSession } from '@/services/practice.service';
 import { ApiErrorResponse, ApiSuccessResponse } from '@/types/api';
@@ -11,7 +12,15 @@ type RouteContext = {
   }>;
 };
 
-export async function POST(_request: NextRequest, context: RouteContext) {
+export async function POST(request: NextRequest, context: RouteContext) {
+  const userId = await verifyAuthToken(request);
+  if (!userId) {
+    return NextResponse.json<ApiErrorResponse>(
+      { error: 'Unauthorized' },
+      { status: 401 }
+    );
+  }
+
   const { sessionId } = await context.params;
 
   if (!sessionId) {
@@ -22,7 +31,7 @@ export async function POST(_request: NextRequest, context: RouteContext) {
   }
 
   try {
-    const data = await completePracticeSession(sessionId);
+    const data = await completePracticeSession(sessionId, userId);
 
     return NextResponse.json<ApiSuccessResponse<CompletePracticeSessionDto>>({ data });
   } catch (error) {

@@ -63,7 +63,45 @@ export async function getQuestionsByLevelAndTopic(
     throw new Error(questionsError.message);
   }
 
-  return questions.map((question) => ({
+  // Fetch answered questions
+  const { data: answeredData } = await supabaseAdmin
+    .from('practice_answers')
+    .select('question_id');
+
+  const answeredIds = new Set((answeredData || []).map((row) => row.question_id));
+
+  // Phân loại câu hỏi
+  const unansweredQuestions = questions.filter((q) => !answeredIds.has(q.id));
+  const answeredQuestionsList = questions.filter((q) => answeredIds.has(q.id));
+
+  // Xáo trộn mảng (Fisher-Yates)
+  const shuffle = <T,>(array: T[]): T[] => {
+    const arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  };
+
+  const shuffledUnanswered = shuffle(unansweredQuestions);
+  
+  let selectedQuestions = [];
+
+  if (shuffledUnanswered.length >= 5) {
+    selectedQuestions = shuffledUnanswered.slice(0, 5);
+  } else {
+    // Nếu không đủ 5 câu chưa làm, lấy tất cả câu chưa làm và bù thêm bằng các câu đã làm
+    selectedQuestions = [...shuffledUnanswered];
+    const shuffledAnswered = shuffle(answeredQuestionsList);
+    const remainingNeeded = 5 - selectedQuestions.length;
+    selectedQuestions = [...selectedQuestions, ...shuffledAnswered.slice(0, remainingNeeded)];
+  }
+
+  // Trả về theo thứ tự để vẫn có chút logic từ dễ đến khó nếu có order_index
+  selectedQuestions.sort((a, b) => a.order_index - b.order_index);
+
+  return selectedQuestions.map((question) => ({
     id: question.id,
     level: hskLevel.code,
     topic: topicRow.key,

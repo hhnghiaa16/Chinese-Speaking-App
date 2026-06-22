@@ -4,9 +4,12 @@ import { getTopics } from '@/services/topics.service';
 import { ApiErrorResponse, ApiSuccessResponse } from '@/types/api';
 import { TopicDto } from '@/types/topic';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const data = await getTopics();
+    const { searchParams } = new URL(request.url);
+    const level = searchParams.get('level');
+
+    const data = await getTopics(level);
 
     return NextResponse.json<ApiSuccessResponse<TopicDto[]>>({ data });
   } catch {
