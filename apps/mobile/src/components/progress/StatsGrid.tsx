@@ -18,13 +18,13 @@ export function StatsGrid({
   return (
     <View style={styles.container}>
       <View style={styles.row}>
-        <StatCard icon="◎" value={totalSessions.toString()} label="Buổi luyện tập" />
-        <StatCard icon="✨" value={`${averageScore.toFixed(1)}/10`} label="Điểm trung bình" />
+        <StatCard icon="sessions" value={totalSessions.toString()} label="Buổi luyện tập" />
+        <StatCard icon="score" value={`${averageScore.toFixed(1)}/10`} label="Điểm trung bình" />
       </View>
 
       <View style={styles.row}>
-        <StatCard icon="口" value={totalQuestions.toString()} label="Câu đã luyện" />
-        <StatCard icon="🔥" value={`${streakDays} ngày`} label="Chuỗi luyện tập" />
+        <StatCard icon="questions" value={totalQuestions.toString()} label="Câu đã luyện" />
+        <StatCard icon="streak" value={`${streakDays} ngày`} label="Chuỗi luyện tập" />
       </View>
     </View>
   );
@@ -38,6 +38,5 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 12,
   },
 });

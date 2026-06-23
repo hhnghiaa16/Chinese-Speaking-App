@@ -1,3 +1,4 @@
+import { BarChart2 } from 'lucide-react-native';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { COLORS } from '../../theme/colors';
@@ -16,8 +17,17 @@ type HSKProgressSectionProps = {
 export function HSKProgressSection({ items }: HSKProgressSectionProps) {
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>Tiến trình HSK</Text>
-      <Text style={styles.description}>Theo dõi mức độ hoàn thành câu hỏi ở từng cấp.</Text>
+      <View style={styles.header}>
+        <View style={styles.iconWrap}>
+          <BarChart2 color={COLORS.purpleLight} size={16} strokeWidth={1.8} />
+        </View>
+        <View>
+          <Text style={styles.title}>Tiến trình HSK</Text>
+          <Text style={styles.description}>Theo dõi mức độ hoàn thành từng cấp.</Text>
+        </View>
+      </View>
+
+      <View style={styles.divider} />
 
       {items.map((item) => (
         <HSKProgressItem
@@ -41,17 +51,35 @@ const styles = StyleSheet.create({
     padding: 22,
     marginBottom: 18,
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    marginBottom: 16,
+  },
+  iconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: 'rgba(109, 74, 255, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   title: {
     color: COLORS.textPrimary,
-    fontSize: 22,
+    fontSize: 18,
     fontFamily: serifFont,
     fontWeight: '700',
-    marginBottom: 6,
   },
   description: {
     color: COLORS.textSecondary,
-    fontSize: 13,
-    lineHeight: 20,
-    marginBottom: 20,
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 2,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: 'rgba(33, 26, 70, 0.8)',
+    marginBottom: 18,
   },
 });

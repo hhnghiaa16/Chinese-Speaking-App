@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { verifyAuthToken } from '@/lib/auth';
+
 import { generateOpenAiText } from '@/services/ai/providers/openai.provider';
 import {
   buildQuestionGenUserPrompt,
@@ -31,6 +33,14 @@ type GenerateQuestionBody = {
 };
 
 export async function POST(request: NextRequest) {
+  const userId = await verifyAuthToken(request);
+  if (!userId) {
+    return NextResponse.json<ApiErrorResponse>(
+      { error: 'Unauthorized' },
+      { status: 401 }
+    );
+  }
+
   let body: GenerateQuestionBody;
 
   try {

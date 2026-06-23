@@ -13,7 +13,6 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -21,6 +20,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AnimatedBouncingDots } from '../components/animations/AnimatedBouncingDots';
+import { AnimatedBreathing } from '../components/animations/AnimatedBreathing';
+import { AnimatedPressable } from '../components/common/AnimatedPressable';
 import { HomeHeader } from '../components/home/HomeHeader';
 import { AnswerInputCard } from '../components/practice/AnswerInputCard';
 import { PlaybackControls } from '../components/practice/PlaybackControls';
@@ -167,8 +169,7 @@ export function PracticeScreen({ navigation, route }: Props) {
         <SafeAreaView style={styles.safeArea} edges={['top']}>
           <HomeHeader activeTab="practice" />
           <View style={styles.loadingState}>
-            <ActivityIndicator color={COLORS.yellow} />
-            <Text style={styles.loadingText}>Đang tải câu hỏi...</Text>
+            <AnimatedBouncingDots />
           </View>
         </SafeAreaView>
       </LinearGradient>
@@ -185,12 +186,12 @@ export function PracticeScreen({ navigation, route }: Props) {
             <Text style={styles.emptyDescription}>
               Bạn có thể quay lại chọn chủ đề khác để tiếp tục luyện tập.
             </Text>
-            <Pressable
+            <AnimatedPressable
               style={styles.emptyButton}
               onPress={() => navigation.navigate('Topic', { level })}
             >
               <Text style={styles.emptyButtonText}>Quay về Topic</Text>
-            </Pressable>
+            </AnimatedPressable>
           </View>
         </SafeAreaView>
       </LinearGradient>
@@ -357,11 +358,6 @@ export function PracticeScreen({ navigation, route }: Props) {
       return;
     }
 
-    await setAudioModeAsync({
-      allowsRecording: true,
-      playsInSilentMode: true,
-    });
-
     await audioRecorder.prepareToRecordAsync();
     audioRecorder.record();
 
@@ -371,7 +367,6 @@ export function PracticeScreen({ navigation, route }: Props) {
   const stopRecording = async () => {
     setIsRecording(false);
     await audioRecorder.stop();
-    await setAudioModeAsync({ allowsRecording: false });
 
     const uri = audioRecorder.uri;
 
@@ -473,9 +468,10 @@ export function PracticeScreen({ navigation, route }: Props) {
             )}
 
             {isTranscribing ? (
-              <View style={styles.voiceStatus}>
+              <AnimatedBreathing style={styles.voiceStatus}>
+                <View style={styles.recordingDot} />
                 <Text style={styles.voiceStatusText}>Đang nhận diện giọng nói...</Text>
-              </View>
+              </AnimatedBreathing>
             ) : null}
 
             {showHint ? (
@@ -537,7 +533,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: COLORS.cardBorder,
+    borderColor: 'rgba(168, 160, 200, 0.28)',
     backgroundColor: 'rgba(11, 8, 36, 0.65)',
     padding: 14,
   },
@@ -594,7 +590,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: 'rgba(245, 200, 75, 0.28)',
+    borderColor: 'rgba(245, 200, 75, 0.4)',
     backgroundColor: 'rgba(245, 200, 75, 0.08)',
     paddingHorizontal: 12,
     paddingVertical: 8,

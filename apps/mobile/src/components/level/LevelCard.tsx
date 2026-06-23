@@ -1,4 +1,8 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ArrowUpRight } from 'lucide-react-native';
+import { StyleSheet, Text, View } from 'react-native';
+
+import { AnimatedProgressCircle } from '../animations/AnimatedProgressCircle';
+import { AnimatedPressable } from '../common/AnimatedPressable';
 
 import { COLORS } from '../../theme/colors';
 import { serifFont } from '../../theme/typography';
@@ -10,6 +14,7 @@ type LevelCardProps = {
   vocabCount: string;
   questionCount: number;
   available: boolean;
+  progress?: number;
   onPress: () => void;
 };
 
@@ -20,20 +25,34 @@ export function LevelCard({
   vocabCount,
   questionCount,
   available,
+  progress = 0,
   onPress,
 }: LevelCardProps) {
+  const radius = 32;
+  const strokeWidth = 5;
+
   return (
-    <Pressable
-      style={({ pressed }) => [styles.card, pressed && styles.cardPressed, !available && styles.cardDisabled]}
+    <AnimatedPressable
+      style={[
+        styles.card,
+        !available && styles.cardDisabled,
+      ]}
       onPress={onPress}
+      disabled={!available}
     >
       <View style={styles.topRow}>
-        <Text style={styles.number}>{number}</Text>
-        <Text style={styles.arrow}>↗</Text>
+        <Text style={[styles.number, !available && styles.numberDisabled]}>{number}</Text>
+        <View style={[styles.arrowWrap, !available && styles.arrowWrapDisabled]}>
+          <ArrowUpRight
+            color={available ? COLORS.yellow : COLORS.textMuted}
+            size={16}
+            strokeWidth={2}
+          />
+        </View>
       </View>
 
       <View>
-        <Text style={styles.title}>{title}</Text>
+        <Text style={[styles.title, !available && styles.titleDisabled]}>{title}</Text>
         <Text style={styles.subtitle}>{subtitle}</Text>
 
         <View style={styles.pillContainer}>
@@ -47,26 +66,30 @@ export function LevelCard({
           </View>
         </View>
       </View>
-    </Pressable>
+
+      {available && (
+        <View style={styles.progressContainer}>
+          <AnimatedProgressCircle progress={progress} radius={radius} strokeWidth={strokeWidth} />
+          <Text style={styles.progressText}>{Math.round(progress)}%</Text>
+        </View>
+      )}
+    </AnimatedPressable>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
     minHeight: 190,
-    borderRadius: 18,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: COLORS.cardBorder,
+    borderColor: 'rgba(109, 74, 255, 0.35)',
     backgroundColor: 'rgba(11, 8, 36, 0.92)',
     padding: 24,
     marginBottom: 14,
     justifyContent: 'space-between',
   },
-  cardPressed: {
-    opacity: 0.85,
-  },
   cardDisabled: {
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     backgroundColor: 'rgba(11, 8, 36, 0.4)',
   },
   topRow: {
@@ -81,9 +104,36 @@ const styles = StyleSheet.create({
     fontFamily: serifFont,
     fontWeight: '400',
   },
-  arrow: {
-    color: COLORS.textSecondary,
-    fontSize: 18,
+  numberDisabled: {
+    color: COLORS.textMuted,
+  },
+  arrowWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(245, 200, 75, 0.3)',
+    backgroundColor: 'rgba(245, 200, 75, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  arrowWrapDisabled: {
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+  },
+  progressContainer: {
+    position: 'absolute',
+    bottom: 24,
+    right: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  progressText: {
+    position: 'absolute',
+    color: COLORS.white,
+    fontSize: 15,
+    fontWeight: '700',
+    fontFamily: serifFont,
   },
   title: {
     color: COLORS.textPrimary,
@@ -92,6 +142,9 @@ const styles = StyleSheet.create({
     fontFamily: serifFont,
     fontWeight: '700',
     marginBottom: 4,
+  },
+  titleDisabled: {
+    color: COLORS.textMuted,
   },
   subtitle: {
     color: COLORS.textSecondary,
@@ -104,10 +157,11 @@ const styles = StyleSheet.create({
   },
   vocabPill: {
     borderWidth: 1,
-    borderColor: COLORS.cardBorder,
+    borderColor: 'rgba(109, 74, 255, 0.3)',
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 5,
+    backgroundColor: 'rgba(33, 26, 70, 0.4)',
   },
   vocabText: {
     color: COLORS.textSecondary,

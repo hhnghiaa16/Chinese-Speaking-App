@@ -4,11 +4,15 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AnimatedBouncingDots } from '../components/animations/AnimatedBouncingDots';
+import { AnimatedFadeIn } from '../components/animations/AnimatedFadeIn';
 import { HomeHeader } from '../components/home/HomeHeader';
 import { LevelCard } from '../components/level/LevelCard';
 import { LevelIntro } from '../components/level/LevelIntro';
 import { hskLevels } from '../data/levels';
 import { getHskLevelsFromApi } from '../services/api/hskApi';
+import { getProgressFromApi } from '../services/api/progressApi';
+import { ProgressApiDto } from '../services/api/types';
 import { COLORS } from '../theme/colors';
 import { RootStackParamList } from '../types/navigation';
 
@@ -25,17 +29,22 @@ type HskLevel = {
 
 export function LevelScreen({ navigation }: Props) {
   const [levels, setLevels] = useState<HskLevel[]>([...hskLevels]);
+  const [progress, setProgress] = useState<ProgressApiDto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
 
-    async function loadLevels() {
+    async function loadData() {
       try {
-        const apiLevels = await getHskLevelsFromApi();
+        const [apiLevels, apiProgress] = await Promise.all([
+          getHskLevelsFromApi(),
+          getProgressFromApi().catch(() => null)
+        ]);
 
         if (isMounted) {
           setLevels(apiLevels);
+          if (apiProgress) setProgress(apiProgress);
         }
       } catch {
         if (isMounted) {
@@ -48,7 +57,7 @@ export function LevelScreen({ navigation }: Props) {
       }
     }
 
-    void loadLevels();
+    void loadData();
 
     return () => {
       isMounted = false;
@@ -80,28 +89,32 @@ export function LevelScreen({ navigation }: Props) {
 
           {isLoading ? (
             <View style={styles.loadingState}>
-              <ActivityIndicator color={COLORS.yellow} size="large" />
-              <Text style={styles.loadingText}>Đang tải lộ trình...</Text>
+              <AnimatedBouncingDots />
             </View>
           ) : (
-            levels.map((level) => (
-              <LevelCard
-                key={level.key}
-                number={level.number}
-                title={level.title}
-                subtitle={level.subtitle}
-                vocabCount={level.vocabCount}
-                questionCount={level.questionCount}
-                available={level.available}
-                onPress={() => {
-                  if (level.available) {
-                    navigation.navigate('Topic', { level: level.key });
-                  } else {
-                    Alert.alert('Chưa có dữ liệu', 'Cấp độ này hiện chưa có câu hỏi nào. Vui lòng quay lại sau.');
-                  }
-                }}
-              />
-            ))
+            levels.map((level, index) => {
+              const levelProgress = progress?.hskProgress?.find((p) => p.level === level.key)?.percent || 0;
+              return (
+                <AnimatedFadeIn key={level.key} index={index}>
+                  <LevelCard
+                    number={level.number}
+                    title={level.title}
+                    subtitle={level.subtitle}
+                    vocabCount={level.vocabCount}
+                    questionCount={level.questionCount}
+                    available={level.available}
+                    progress={levelProgress}
+                    onPress={() => {
+                      if (level.available) {
+                        navigation.navigate('Topic', { level: level.key });
+                      } else {
+                        Alert.alert('Chưa có dữ liệu', 'Cấp độ này hiện chưa có câu hỏi nào. Vui lòng quay lại sau.');
+                      }
+                    }}
+                  />
+                </AnimatedFadeIn>
+              );
+            })
           )}
         </ScrollView>
       </SafeAreaView>

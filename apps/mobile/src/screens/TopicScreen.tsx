@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AnimatedBouncingDots } from '../components/animations/AnimatedBouncingDots';
+import { AnimatedFadeIn } from '../components/animations/AnimatedFadeIn';
 import { HomeHeader } from '../components/home/HomeHeader';
 import { TopicCard } from '../components/topic/TopicCard';
 import { TopicIntro } from '../components/topic/TopicIntro';
@@ -64,26 +66,26 @@ export function TopicScreen({ navigation, route }: Props) {
 
           {isLoading ? (
             <View style={styles.loadingState}>
-              <ActivityIndicator color={COLORS.yellow} size="large" />
-              <Text style={styles.loadingText}>Đang tải chủ đề...</Text>
+              <AnimatedBouncingDots />
             </View>
           ) : (
-            availableTopics.map((topic) => (
-              <TopicCard
-                key={topic.key}
-                emoji={topic.emoji}
-                titleZh={topic.titleZh}
-                titleVi={topic.titleVi}
-                description={topic.description}
-                onPress={() =>
-                  navigation.navigate('ModeSelect', {
-                    level,
-                    topic: topic.key,
-                    topicVi: topic.titleVi,
-                    topicEmoji: topic.emoji ?? '',
-                  })
-                }
-              />
+            availableTopics.map((topic, index) => (
+              <AnimatedFadeIn key={topic.key} index={index}>
+                <TopicCard
+                  emoji={topic.emoji}
+                  titleZh={topic.titleZh}
+                  titleVi={topic.titleVi}
+                  description={topic.description}
+                  onPress={() =>
+                    navigation.navigate('ModeSelect', {
+                      level,
+                      topic: topic.key,
+                      topicVi: topic.titleVi,
+                      topicEmoji: topic.emoji ?? '',
+                    })
+                  }
+                />
+              </AnimatedFadeIn>
             ))
           )}
         </ScrollView>

@@ -1,3 +1,4 @@
+import { BarChart2 } from 'lucide-react-native';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { COLORS } from '../../theme/colors';
@@ -21,24 +22,32 @@ export function PracticeStatsCard({
   return (
     <View style={styles.card}>
       <View style={styles.headerRow}>
-        <Text style={styles.icon}>◎</Text>
+        <View style={styles.iconWrap}>
+          <BarChart2 color={COLORS.purpleLight} size={16} strokeWidth={1.8} />
+        </View>
         <Text style={styles.title}>Tổng kết phiên luyện</Text>
       </View>
 
       <Text style={styles.mainStat}>
         {answeredQuestions} / {totalQuestions} câu đã luyện
       </Text>
-      <Text style={styles.metaText}>Trình độ: {displayLevel}</Text>
-      <Text style={styles.metaText}>Chủ đề: {topicVi}</Text>
+      <View style={styles.metaRow}>
+        <View style={styles.metaChip}>
+          <Text style={styles.metaChipText}>{displayLevel}</Text>
+        </View>
+        <View style={styles.metaChip}>
+          <Text style={styles.metaChipText}>{topicVi}</Text>
+        </View>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 20,
+    borderRadius: 22,
     borderWidth: 1,
-    borderColor: COLORS.cardBorder,
+    borderColor: 'rgba(109, 74, 255, 0.3)',
     backgroundColor: 'rgba(11, 8, 36, 0.92)',
     padding: 22,
     marginBottom: 18,
@@ -46,12 +55,16 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 12,
     marginBottom: 16,
   },
-  icon: {
-    color: COLORS.yellow,
-    fontSize: 18,
-    marginRight: 10,
+  iconWrap: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: 'rgba(109, 74, 255, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
     color: COLORS.textPrimary,
@@ -65,11 +78,24 @@ const styles = StyleSheet.create({
     lineHeight: 28,
     fontFamily: serifFont,
     fontWeight: '700',
-    marginBottom: 12,
+    marginBottom: 14,
   },
-  metaText: {
+  metaRow: {
+    flexDirection: 'row',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  metaChip: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(109, 74, 255, 0.3)',
+    backgroundColor: 'rgba(33, 26, 70, 0.5)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  metaChipText: {
     color: COLORS.textSecondary,
-    fontSize: 13,
-    lineHeight: 20,
+    fontSize: 12,
+    fontWeight: '600',
   },
 });

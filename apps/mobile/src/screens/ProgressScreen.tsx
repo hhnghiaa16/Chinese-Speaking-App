@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AnimatedBouncingDots } from '../components/animations/AnimatedBouncingDots';
 import { HomeHeader } from '../components/home/HomeHeader';
 import { HSKProgressSection } from '../components/progress/HSKProgressSection';
 import { ProgressCTA } from '../components/progress/ProgressCTA';
@@ -74,8 +75,7 @@ export function ProgressScreen({ navigation }: Props) {
 
           {isLoading && !refreshing ? (
             <View style={styles.loadingState}>
-              <ActivityIndicator color={COLORS.yellow} size="large" />
-              <Text style={styles.loadingText}>Đang đồng bộ dữ liệu tiến độ...</Text>
+              <AnimatedBouncingDots />
             </View>
           ) : (
             <View style={isLoading ? { opacity: 0.5 } : undefined}>

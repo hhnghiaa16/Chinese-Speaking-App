@@ -16,7 +16,9 @@ export function LevelIntro({
 }: LevelIntroProps) {
   return (
     <View style={styles.container}>
-      <Text style={styles.stepLabel}>{stepText}</Text>
+      <View style={styles.stepBadge}>
+        <Text style={styles.stepLabel}>{stepText}</Text>
+      </View>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.description}>{description}</Text>
     </View>
@@ -27,12 +29,21 @@ const styles = StyleSheet.create({
   container: {
     marginBottom: 36,
   },
+  stepBadge: {
+    alignSelf: 'flex-start',
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(245, 200, 75, 0.32)',
+    backgroundColor: 'rgba(245, 200, 75, 0.07)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    marginBottom: 18,
+  },
   stepLabel: {
     color: COLORS.yellow,
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 1.4,
-    marginBottom: 12,
   },
   title: {
     color: COLORS.textPrimary,

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { verifyAuthToken } from '@/lib/auth';
+
 import { gradeAnswerWithAi } from '@/services/ai/ai.service';
 import { GradeAnswerInput, GradeAnswerResult } from '@/services/ai/ai.types';
 import { ApiErrorResponse, ApiSuccessResponse } from '@/types/api';
@@ -14,6 +16,14 @@ type AiGradeRequestBody = {
 };
 
 export async function POST(request: NextRequest) {
+  const userId = await verifyAuthToken(request);
+  if (!userId) {
+    return NextResponse.json<ApiErrorResponse>(
+      { error: 'Unauthorized' },
+      { status: 401 }
+    );
+  }
+
   let body: AiGradeRequestBody;
 
   try {

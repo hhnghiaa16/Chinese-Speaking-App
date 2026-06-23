@@ -1,4 +1,4 @@
-import { createAudioPlayer, type AudioStatus } from 'expo-audio';
+import { createAudioPlayer, setAudioModeAsync, type AudioStatus } from 'expo-audio';
 import * as FileSystem from 'expo-file-system/legacy';
 
 type PlayBase64AudioInput = {
@@ -57,6 +57,7 @@ function waitForPlaybackToFinish(player: AudioPlayer) {
     let subscription: { remove: () => void } | null = null;
 
     const settle = (error?: Error) => {
+      console.log('[AudioPlayer] Settle called, error:', error);
       if (isSettled) {
         return;
       }
@@ -73,6 +74,14 @@ function waitForPlaybackToFinish(player: AudioPlayer) {
     };
 
     subscription = player.addListener('playbackStatusUpdate', (status: AudioStatus) => {
+      console.log('[AudioPlayer] Status update:', {
+        isLoaded: status.isLoaded,
+        playing: status.playing,
+        didJustFinish: status.didJustFinish,
+        currentTime: status.currentTime,
+        error: status.error,
+        playbackState: status.playbackState,
+      });
       if (!status.isLoaded) {
         if (status.error) {
           settle(new Error(status.error));
@@ -81,14 +90,20 @@ function waitForPlaybackToFinish(player: AudioPlayer) {
         return;
       }
 
-      if (status.didJustFinish) {
-        settle();
+      if (status.didJustFinish || status.currentTime >= status.duration && status.duration > 0 || status.playbackState === 'stopped') {
+         // Also check playbackState === 'stopped' just in case didJustFinish isn't reliable
+         if (status.didJustFinish) {
+           console.log('[AudioPlayer] didJustFinish is true. Settling...');
+           settle();
+         }
       }
     });
 
     try {
+      console.log('[AudioPlayer] Calling player.play()...');
       player.play();
     } catch (error) {
+      console.log('[AudioPlayer] play() threw error:', error);
       settle(error instanceof Error ? error : new Error('Failed to play audio.'));
     }
   });
@@ -103,6 +118,17 @@ export async function playBase64Audio(input: PlayBase64AudioInput): Promise<void
 
   const fileUri = createCacheFileUri(input.mimeType);
   let player: AudioPlayer | null = null;
+
+  try {
+    await setAudioModeAsync({
+      allowsRecording: true,
+      playsInSilentMode: true,
+      interruptionMode: 'mixWithOthers',
+      shouldRouteThroughEarpiece: false,
+    });
+  } catch (error) {
+    console.warn('[AudioPlayer] Failed to set audio mode:', error);
+  }
 
   try {
     await FileSystem.writeAsStringAsync(fileUri, audioBase64, {

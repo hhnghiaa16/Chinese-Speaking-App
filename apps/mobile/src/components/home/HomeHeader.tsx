@@ -1,8 +1,9 @@
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ChevronLeft } from 'lucide-react-native';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Text, View, StyleSheet } from 'react-native';
 
+import { AnimatedPressable } from '../common/AnimatedPressable';
 import { COLORS } from '../../theme/colors';
 import { serifFont } from '../../theme/typography';
 import { RootStackParamList } from '../../types/navigation';
@@ -43,19 +44,19 @@ export function HomeHeader({
     <View style={styles.header}>
       <View style={styles.brand}>
         {showBackButton && canGoBack ? (
-          <Pressable
+          <AnimatedPressable
             accessibilityLabel="Quay lại"
             hitSlop={8}
             style={styles.backButton}
             onPress={handleBackPress}
           >
             <ChevronLeft color={COLORS.textPrimary} size={18} strokeWidth={1.8} />
-          </Pressable>
+          </AnimatedPressable>
         ) : null}
 
-        <Pressable hitSlop={10} style={styles.logoBox} onPress={() => navigation.navigate('Home')}>
+        <AnimatedPressable hitSlop={10} style={styles.logoBox} onPress={() => navigation.navigate('Home')}>
           <Text style={styles.logoText}>華</Text>
-        </Pressable>
+        </AnimatedPressable>
 
         <View style={styles.brandText}>
           <Text style={styles.brandName}>華語 Lab</Text>
@@ -65,7 +66,7 @@ export function HomeHeader({
 
       <View style={styles.actions}>
         <View style={styles.nav}>
-          <Pressable
+          <AnimatedPressable
             hitSlop={8}
             style={[styles.navButton, activeTab === 'practice' && styles.navButtonActive]}
             onPress={handlePracticePress}
@@ -75,9 +76,9 @@ export function HomeHeader({
             >
               Luyện tập
             </Text>
-          </Pressable>
+          </AnimatedPressable>
 
-          <Pressable
+          <AnimatedPressable
             hitSlop={8}
             style={[styles.navButton, activeTab === 'progress' && styles.navButtonActive]}
             onPress={handleProgressPress}
@@ -87,10 +88,10 @@ export function HomeHeader({
             >
               Tiến độ
             </Text>
-          </Pressable>
+          </AnimatedPressable>
         </View>
 
-        <Pressable
+        <AnimatedPressable
           accessibilityLabel="Quản lý cá nhân"
           hitSlop={8}
           style={[
@@ -100,7 +101,7 @@ export function HomeHeader({
           onPress={handleProfilePress}
         >
           <Text style={styles.profileText}>我</Text>
-        </Pressable>
+        </AnimatedPressable>
       </View>
     </View>
   );
@@ -131,7 +132,7 @@ const styles = StyleSheet.create({
     height: 30,
     borderRadius: 15,
     borderWidth: 1,
-    borderColor: COLORS.cardBorder,
+    borderColor: 'rgba(109, 74, 255, 0.35)',
     backgroundColor: 'rgba(5, 3, 22, 0.35)',
     alignItems: 'center',
     justifyContent: 'center',
@@ -173,11 +174,14 @@ const styles = StyleSheet.create({
   },
   navButton: {
     borderRadius: 9,
+    borderWidth: 1,
+    borderColor: 'transparent',
     paddingHorizontal: 8,
     paddingVertical: 8,
   },
   navButtonActive: {
     backgroundColor: 'rgba(45, 10, 145, 0.88)',
+    borderColor: 'rgba(109, 74, 255, 0.55)',
   },
   navItem: {
     color: COLORS.textSecondary,

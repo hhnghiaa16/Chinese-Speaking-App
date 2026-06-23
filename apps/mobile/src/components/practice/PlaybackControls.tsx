@@ -28,14 +28,22 @@ export function PlaybackControls({ uri }: PlaybackControlsProps) {
       const pMins = Math.floor(pos / 60);
       const pSecs = pos % 60;
       setPositionStr(`${pMins.toString().padStart(2, '0')}:${pSecs.toString().padStart(2, '0')}`);
+    } else if (status.error) {
+      console.warn('[PlaybackControls] Audio loading error:', status.error);
     }
   }, [status]);
 
   const handleTogglePlay = () => {
-    if (player.playing) {
-      player.pause();
-    } else {
-      player.play();
+    if (!status.isLoaded) return;
+    
+    try {
+      if (player.playing) {
+        player.pause();
+      } else {
+        player.play();
+      }
+    } catch (err) {
+      console.warn('[PlaybackControls] Failed to toggle play:', err);
     }
   };
 
@@ -82,7 +90,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(11, 8, 36, 0.8)',
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: COLORS.cardBorder,
+    borderColor: 'rgba(109, 74, 255, 0.3)',
     gap: 14,
   },
   playButton: {
@@ -90,6 +98,8 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 22,
     backgroundColor: COLORS.purple,
+    borderWidth: 1,
+    borderColor: 'rgba(109, 74, 255, 0.7)',
     alignItems: 'center',
     justifyContent: 'center',
   },

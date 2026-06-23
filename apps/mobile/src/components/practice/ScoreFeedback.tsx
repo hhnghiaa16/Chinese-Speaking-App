@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { COLORS } from '../../theme/colors';
+import { scoreColor } from '../../theme/scoreColor';
 
 type ScoreFeedbackProps = {
   score: number;
@@ -26,6 +27,7 @@ export function ScoreFeedback({
   suggestionVi,
 }: ScoreFeedbackProps) {
   const [displayScore, setDisplayScore] = useState(0);
+  const sc = scoreColor(score);
 
   useEffect(() => {
     let rAF: ReturnType<typeof requestAnimationFrame>;
@@ -52,10 +54,10 @@ export function ScoreFeedback({
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.scoreCircle}>
-          <Text style={styles.scoreValue}>{displayScore.toFixed(1)}</Text>
-          <Text style={styles.scoreMax}>/10</Text>
+      <View style={[styles.header, { borderColor: `${sc}35`, backgroundColor: `${sc}0C` }]}>
+        <View style={[styles.scoreCircle, { borderColor: sc, backgroundColor: `${sc}18` }]}>
+          <Text style={[styles.scoreValue, { color: sc }]}>{displayScore.toFixed(1)}</Text>
+          <Text style={[styles.scoreMax, { color: sc }]}>/10</Text>
         </View>
         <View style={styles.headerText}>
           <Text style={styles.shortFeedback}>{shortFeedbackVi}</Text>
@@ -82,7 +84,7 @@ export function ScoreFeedback({
       {/* Nhận xét chi tiết */}
       <View style={styles.card}>
         <View style={styles.cardTitle}>
-          <MessageSquare color={COLORS.purple} size={16} />
+          <MessageSquare color={COLORS.purpleLight} size={16} />
           <Text style={styles.cardTitleText}>NHẬN XÉT CHI TIẾT</Text>
         </View>
         <View style={styles.feedbackRow}>
@@ -121,26 +123,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
-    paddingHorizontal: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 18,
+    borderWidth: 1,
   },
   scoreCircle: {
     width: 64,
     height: 64,
     borderRadius: 32,
     borderWidth: 2,
-    borderColor: COLORS.yellow,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(245, 200, 75, 0.1)',
   },
   scoreValue: {
-    color: COLORS.yellow,
     fontSize: 22,
     fontWeight: '800',
     lineHeight: 24,
   },
   scoreMax: {
-    color: COLORS.yellow,
     fontSize: 11,
     opacity: 0.6,
   },
@@ -158,7 +159,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: COLORS.cardBorder,
+    borderColor: 'rgba(109, 74, 255, 0.25)',
   },
   cardTitle: {
     flexDirection: 'row',

@@ -6,6 +6,7 @@ import {
   useAudioRecorder,
 } from 'expo-audio';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Volume2, Mic, Square } from 'lucide-react-native';
 import * as Speech from 'expo-speech';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -13,7 +14,6 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -21,6 +21,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AnimatedBouncingDots } from '../components/animations/AnimatedBouncingDots';
+import { AnimatedBreathing } from '../components/animations/AnimatedBreathing';
+import { AnimatedPressable } from '../components/common/AnimatedPressable';
 import { HomeHeader } from '../components/home/HomeHeader';
 import { AnswerInputCard } from '../components/practice/AnswerInputCard';
 import { PlaybackControls } from '../components/practice/PlaybackControls';
@@ -259,7 +262,6 @@ export function AiConversationScreen({ navigation, route }: Props) {
       return;
     }
 
-    await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
     await audioRecorder.prepareToRecordAsync();
     audioRecorder.record();
     setIsRecording(true);
@@ -268,7 +270,6 @@ export function AiConversationScreen({ navigation, route }: Props) {
   const stopRecording = async () => {
     setIsRecording(false);
     await audioRecorder.stop();
-    await setAudioModeAsync({ allowsRecording: false });
 
     const uri = audioRecorder.uri;
 
@@ -281,20 +282,6 @@ export function AiConversationScreen({ navigation, route }: Props) {
     await transcribeRecording(uri);
   };
 
-  const handleRecord = async () => {
-    try {
-      if (isRecording) {
-        await stopRecording();
-        return;
-      }
-
-      await startRecording();
-    } catch {
-      setIsRecording(false);
-      Alert.alert('Lỗi ghi âm', 'Chưa thể ghi âm. Bạn có thể nhập câu trả lời bằng text.');
-    }
-  };
-
   const isLastRound = currentRound >= TOTAL_ROUNDS;
 
   // --- Render helpers ---
@@ -302,8 +289,8 @@ export function AiConversationScreen({ navigation, route }: Props) {
   function renderGenerating() {
     return (
       <View style={styles.centeredState}>
-        <ActivityIndicator color={COLORS.purpleLight} size="large" />
-        <Text style={styles.centeredStateText}>AI đang tạo câu hỏi...</Text>
+        <AnimatedBouncingDots color={COLORS.purpleLight} size={12} />
+        <Text style={[styles.centeredStateText, { marginTop: 16 }]}>AI đang tạo câu hỏi...</Text>
       </View>
     );
   }
@@ -315,13 +302,13 @@ export function AiConversationScreen({ navigation, route }: Props) {
       <View style={styles.questionCard}>
         <View style={styles.questionRow}>
           <Text style={styles.questionZh}>{currentQuestion.questionZh}</Text>
-          <Pressable
+          <AnimatedPressable
             style={[styles.speakerBtn, isSpeaking && styles.speakerBtnDisabled]}
             onPress={handleReplayTts}
             disabled={isSpeaking}
           >
-            <Text style={styles.speakerIcon}>{isSpeaking ? '🔊' : '🔈'}</Text>
-          </Pressable>
+            <Volume2 color={COLORS.textPrimary} size={16} strokeWidth={1.8} />
+          </AnimatedPressable>
         </View>
 
         {currentQuestion.questionPinyin ? (
@@ -338,7 +325,7 @@ export function AiConversationScreen({ navigation, route }: Props) {
   function renderSpeakingOverlay() {
     return (
       <View style={styles.speakingOverlay}>
-        <ActivityIndicator color={COLORS.purpleLight} />
+        <AnimatedBouncingDots color={COLORS.purpleLight} size={8} />
         <Text style={styles.speakingText}>Đang đọc câu hỏi...</Text>
       </View>
     );
@@ -354,7 +341,7 @@ export function AiConversationScreen({ navigation, route }: Props) {
         ) : null}
 
         {isRecording ? (
-          <RecordingWaveform isRecording={isRecording} onStop={handleRecord} />
+          <RecordingWaveform isRecording={isRecording} onStop={stopRecording} />
         ) : (
           <PracticeActions
             hasScored={false}
@@ -363,9 +350,9 @@ export function AiConversationScreen({ navigation, route }: Props) {
             isTranscribing={isTranscribing}
             isLastQuestion={isLastRound}
             hasRecording={!!recordingUri}
-            onRecord={() => void handleRecord()}
+            showSample={false}
+            onRecord={startRecording}
             onToggleHint={() => setShowHint((prev) => !prev)}
-            onToggleSample={() => Alert.alert('Thông báo', 'Hội thoại AI hiện chưa có câu mẫu.')}
             onScore={() => void handleGrade()}
             onNext={() => {}}
             onResult={() => {}}
@@ -373,9 +360,10 @@ export function AiConversationScreen({ navigation, route }: Props) {
         )}
 
         {isTranscribing ? (
-          <View style={styles.voiceStatus}>
+          <AnimatedBreathing style={styles.voiceStatus}>
+            <View style={styles.recordingDot} />
             <Text style={styles.voiceStatusText}>Đang nhận diện giọng nói...</Text>
-          </View>
+          </AnimatedBreathing>
         ) : null}
 
         {showHint && currentQuestion?.hintVi ? (
@@ -390,8 +378,8 @@ export function AiConversationScreen({ navigation, route }: Props) {
   function renderGrading() {
     return (
       <View style={styles.centeredState}>
-        <ActivityIndicator color={COLORS.yellow} />
-        <Text style={styles.centeredStateText}>AI đang chấm bài...</Text>
+        <AnimatedBouncingDots color={COLORS.yellow} size={12} />
+        <Text style={[styles.centeredStateText, { marginTop: 16 }]}>AI đang chấm bài...</Text>
       </View>
     );
   }
@@ -412,11 +400,13 @@ export function AiConversationScreen({ navigation, route }: Props) {
           suggestionVi={gradeResult.suggestionVi}
         />
 
-        <Pressable style={styles.btnNext} onPress={handleNext}>
-          <Text style={styles.btnNextText}>
-            {isLastRound ? 'Xem kết quả →' : 'Câu tiếp theo →'}
-          </Text>
-        </Pressable>
+        <View style={{ width: '100%', paddingHorizontal: 18 }}>
+          <AnimatedPressable style={styles.btnNext} onPress={handleNext}>
+            <Text style={styles.btnNextText}>
+              {isLastRound ? 'Xem kết quả →' : 'Câu tiếp theo →'}
+            </Text>
+          </AnimatedPressable>
+        </View>
       </>
     );
   }
@@ -425,12 +415,12 @@ export function AiConversationScreen({ navigation, route }: Props) {
     return (
       <View style={styles.errorBox}>
         <Text style={styles.errorText}>Không thể tải câu hỏi. Thử lại?</Text>
-        <Pressable
+        <AnimatedPressable
           style={styles.retryBtn}
           onPress={() => void generateNextQuestion(askedQuestions)}
         >
           <Text style={styles.retryBtnText}>Thử lại</Text>
-        </Pressable>
+        </AnimatedPressable>
       </View>
     );
   }
@@ -540,7 +530,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 18,
     borderRadius: 22,
     borderWidth: 1,
-    borderColor: 'rgba(109, 74, 255, 0.3)',
+    borderColor: 'rgba(109, 74, 255, 0.45)',
     backgroundColor: 'rgba(11, 8, 36, 0.92)',
     padding: 26,
   },
@@ -563,17 +553,15 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(109, 74, 255, 0.3)',
-    backgroundColor: 'rgba(45, 10, 145, 0.2)',
+    borderColor: 'rgba(109, 74, 255, 0.5)',
+    backgroundColor: 'rgba(45, 10, 145, 0.25)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   speakerBtnDisabled: {
     opacity: 0.4,
   },
-  speakerIcon: {
-    fontSize: 16,
-  },
+
   pinyin: {
     marginTop: 16,
     color: COLORS.textSecondary,
@@ -610,7 +598,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: COLORS.cardBorder,
+    borderColor: 'rgba(168, 160, 200, 0.28)',
     backgroundColor: 'rgba(11, 8, 36, 0.65)',
     padding: 14,
   },
@@ -620,12 +608,18 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   btnNext: {
-    marginHorizontal: 18,
     marginTop: 16,
     borderRadius: 999,
     backgroundColor: COLORS.yellow,
+    borderWidth: 1,
+    borderColor: 'rgba(245, 200, 75, 0.6)',
     paddingVertical: 14,
     alignItems: 'center',
+    shadowColor: COLORS.yellow,
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 5,
   },
   btnNextText: {
     color: '#1A1233',
@@ -638,7 +632,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: 'rgba(245, 200, 75, 0.28)',
+    borderColor: 'rgba(245, 200, 75, 0.4)',
     backgroundColor: 'rgba(245, 200, 75, 0.08)',
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -675,7 +669,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: 'rgba(249, 115, 115, 0.15)',
     borderWidth: 1,
-    borderColor: 'rgba(249, 115, 115, 0.35)',
+    borderColor: 'rgba(249, 115, 115, 0.5)',
     paddingHorizontal: 14,
     paddingVertical: 8,
   },

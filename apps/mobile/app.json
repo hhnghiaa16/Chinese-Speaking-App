@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "HanApp",
-    "slug": "HanApp",
+    "name": "LanApp",
+    "slug": "LanApp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",

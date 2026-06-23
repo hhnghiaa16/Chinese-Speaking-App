@@ -1,8 +1,10 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BookOpenText, MessageCircle } from 'lucide-react-native';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { AnimatedPressable } from '../components/common/AnimatedPressable';
 
 import { HomeHeader } from '../components/home/HomeHeader';
 import { COLORS } from '../theme/colors';
@@ -34,15 +36,17 @@ export function ModeSelectScreen({ navigation, route }: Props) {
 
         {/* Title */}
         <View style={styles.titleSection}>
-          <Text style={styles.eyebrow}>CHỌN CHẾ ĐỘ</Text>
+          <View style={styles.eyebrowBadge}>
+            <Text style={styles.eyebrow}>CHỌN CHẾ ĐỘ</Text>
+          </View>
           <Text style={styles.title}>Bạn muốn luyện{'\n'}theo cách nào?</Text>
         </View>
 
         {/* Mode Cards */}
         <View style={styles.cardsSection}>
           {/* Bank Mode */}
-          <Pressable
-            style={({ pressed }) => [styles.card, styles.cardBank, pressed && styles.cardPressed]}
+          <AnimatedPressable
+            style={[styles.card, styles.cardBank]}
             onPress={handleBankMode}
           >
             <View style={styles.cardIconWrap}>
@@ -59,11 +63,11 @@ export function ModeSelectScreen({ navigation, route }: Props) {
             <View style={styles.cardBadge}>
               <Text style={styles.cardBadgeText}>Ngân hàng đề</Text>
             </View>
-          </Pressable>
+          </AnimatedPressable>
 
           {/* AI Mode */}
-          <Pressable
-            style={({ pressed }) => [styles.card, styles.cardAi, pressed && styles.cardPressed]}
+          <AnimatedPressable
+            style={[styles.card, styles.cardAi]}
             onPress={handleAiMode}
           >
             <View style={styles.cardIconWrapAi}>
@@ -80,7 +84,7 @@ export function ModeSelectScreen({ navigation, route }: Props) {
             <View style={styles.cardBadgeAi}>
               <Text style={styles.cardBadgeTextAi}>5 câu · AI sinh tự động</Text>
             </View>
-          </Pressable>
+          </AnimatedPressable>
         </View>
       </SafeAreaView>
     </LinearGradient>
@@ -118,12 +122,21 @@ const styles = StyleSheet.create({
     paddingTop: 36,
     paddingBottom: 12,
   },
+  eyebrowBadge: {
+    alignSelf: 'flex-start',
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(245, 200, 75, 0.32)',
+    backgroundColor: 'rgba(245, 200, 75, 0.07)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    marginBottom: 16,
+  },
   eyebrow: {
     color: COLORS.yellow,
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 1.6,
-    marginBottom: 12,
   },
   title: {
     color: COLORS.textPrimary,
@@ -144,15 +157,12 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   cardBank: {
-    borderColor: COLORS.cardBorder,
+    borderColor: 'rgba(168, 160, 200, 0.3)',
     backgroundColor: 'rgba(11, 8, 36, 0.85)',
   },
   cardAi: {
     borderColor: 'rgba(109, 74, 255, 0.45)',
     backgroundColor: 'rgba(45, 10, 145, 0.15)',
-  },
-  cardPressed: {
-    opacity: 0.78,
   },
   cardIconWrap: {
     width: 48,
@@ -192,7 +202,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: COLORS.cardBorder,
+    borderColor: 'rgba(168, 160, 200, 0.28)',
     backgroundColor: 'rgba(5, 3, 22, 0.5)',
     paddingHorizontal: 12,
     paddingVertical: 5,

@@ -48,6 +48,7 @@ export type ProgressApiDto = {
   }>;
   recentPractice: {
     level: string;
+    topicKey: string;
     topicEmoji: string;
     topicVi: string;
     questions: number;

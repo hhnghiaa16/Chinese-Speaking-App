@@ -1,14 +1,13 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+
+import { AnimatedPressable } from '../common/AnimatedPressable';
 
 import { COLORS } from '../../theme/colors';
 import { serifFont } from '../../theme/typography';
 
-type HeroSectionProps = {
-  onStartPress: () => void;
-  onProgressPress?: () => void;
-};
+type HeroSectionProps = {};
 
-export function HeroSection({ onStartPress, onProgressPress }: HeroSectionProps) {
+export function HeroSection({}: HeroSectionProps) {
   return (
     <View style={styles.container}>
       <View style={styles.badge}>
@@ -23,27 +22,18 @@ export function HeroSection({ onStartPress, onProgressPress }: HeroSectionProps)
       </View>
 
       <Text style={styles.description}>
-        Phòng luyện phản xạ hỏi–đáp tiếng Trung theo trình độ HSK 1 đến HSK 5.
-        Nói, được chấm, được gợi ý cải thiện — ngay trong một nhịp thở.
+        Phòng luyện phản xạ hỏi–đáp tiếng Trung. Trả lời bằng giọng nói, được chấm điểm và gợi ý cải thiện ngay lập tức.
       </Text>
-
-      <Pressable style={styles.primaryButton} onPress={onStartPress}>
-        <Text style={styles.primaryButtonText}>Bắt đầu luyện tập →</Text>
-      </Pressable>
-
-      <Pressable style={styles.progressLink} onPress={onProgressPress}>
-        <Text style={styles.progressLinkText}>Xem tiến độ của tôi →</Text>
-      </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: 58,
+    paddingTop: 36,
+    alignItems: 'center',
   },
   badge: {
-    alignSelf: 'flex-start',
     borderWidth: 1,
     borderColor: '#2A2453',
     backgroundColor: 'rgba(12, 8, 40, 0.9)',
@@ -58,57 +48,35 @@ const styles = StyleSheet.create({
   },
   titlePrimary: {
     color: COLORS.textPrimary,
-    fontSize: 46,
-    lineHeight: 50,
+    fontSize: 40,
+    lineHeight: 44,
     fontWeight: '700',
     fontFamily: serifFont,
+    textAlign: 'center',
   },
   titleChinese: {
     color: COLORS.yellow,
-    fontSize: 42,
-    lineHeight: 46,
+    fontSize: 38,
+    lineHeight: 42,
     fontFamily: serifFont,
     fontWeight: '500',
+    textAlign: 'center',
   },
   titleItalic: {
     color: '#A9A0D6',
-    fontSize: 42,
-    lineHeight: 44,
+    fontSize: 38,
+    lineHeight: 40,
     fontFamily: serifFont,
     fontStyle: 'italic',
     fontWeight: '500',
+    textAlign: 'center',
   },
   description: {
-    marginTop: 22,
-    color: '#C6BFE6',
-    fontSize: 14,
-    lineHeight: 22,
-    maxWidth: 310,
-  },
-  primaryButton: {
-    marginTop: 32,
-    backgroundColor: COLORS.purple,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderRadius: 999,
-    alignSelf: 'flex-start',
-    shadowColor: COLORS.purpleLight,
-    shadowOpacity: 0.38,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 8,
-  },
-  primaryButtonText: {
-    color: COLORS.white,
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  progressLink: {
     marginTop: 20,
-    alignSelf: 'flex-start',
-  },
-  progressLinkText: {
-    color: '#B9B0E4',
+    color: '#C6BFE6',
     fontSize: 13,
+    lineHeight: 20,
+    maxWidth: 290,
+    textAlign: 'center',
   },
 });

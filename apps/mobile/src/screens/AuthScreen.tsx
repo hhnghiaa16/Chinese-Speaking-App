@@ -64,7 +64,7 @@ export function AuthScreen() {
           style={styles.keyboardView}
         >
           <View style={styles.content}>
-            <Text style={styles.title}>HanApp</Text>
+            <Text style={styles.title}>LanApp</Text>
             <Text style={styles.subtitle}>
               {isLogin ? 'Đăng nhập để tiếp tục' : 'Tạo tài khoản mới'}
             </Text>

@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(11, 8, 36, 0.8)',
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: COLORS.purple,
+    borderColor: 'rgba(249, 115, 115, 0.45)',
     gap: 16,
   },
   pulseContainer: {
@@ -133,6 +133,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.purple,
+    borderWidth: 1,
+    borderColor: 'rgba(109, 74, 255, 0.7)',
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 12,

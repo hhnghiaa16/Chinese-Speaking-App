@@ -13,6 +13,7 @@ export type ProgressSummaryDto = {
   }[];
   recentPractice: {
     level: string;
+    topicKey: string;
     topicEmoji: string;
     topicVi: string;
     questions: number;
@@ -163,6 +164,7 @@ export async function getProgressSummary(userId: string): Promise<ProgressSummar
 
     recentPractice = {
       level: hskLevel?.code || 'N/A',
+      topicKey: topic?.key || '',
       topicEmoji: topic?.emoji || '📚',
       topicVi: topic?.title_vi || 'Chủ đề',
       questions: recentSession.answered_questions || 0,
@@ -172,6 +174,7 @@ export async function getProgressSummary(userId: string): Promise<ProgressSummar
   } else {
     recentPractice = {
       level: 'Chưa có',
+      topicKey: '',
       topicEmoji: '🚀',
       topicVi: 'Bắt đầu bài học đầu tiên',
       questions: 0,
