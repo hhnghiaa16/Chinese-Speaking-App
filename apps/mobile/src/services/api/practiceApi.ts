@@ -1,3 +1,4 @@
+import { supabase } from '../auth/supabaseClient';
 import { apiPost, getApiUrl } from './apiClient';
 
 export type GeneratedQuestionDto = {
@@ -92,30 +93,35 @@ export async function transcribeAudioFromApi(audioUri: string): Promise<Transcri
 
     request.open('POST', getApiUrl('/api/practice/transcribe'));
 
-    request.onload = () => {
-      if (request.status < 200 || request.status >= 300) {
-        reject(
-          new Error(
-            `API POST /api/practice/transcribe failed with status ${request.status}: ${request.responseText}`,
-          ),
-        );
-        return;
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.access_token) {
+        request.setRequestHeader('Authorization', `Bearer ${session.access_token}`);
       }
+      
+      request.onload = () => {
+        if (request.status < 200 || request.status >= 300) {
+          reject(
+            new Error(
+              `API POST /api/practice/transcribe failed with status ${request.status}: ${request.responseText}`,
+            ),
+          );
+          return;
+        }
 
-      try {
-        const json = JSON.parse(request.responseText) as { data: TranscribeAudioApiDto };
+        try {
+          const json = JSON.parse(request.responseText) as { data: TranscribeAudioApiDto };
+          resolve(json.data);
+        } catch {
+          reject(new Error('Failed to parse transcribe response.'));
+        }
+      };
 
-        resolve(json.data);
-      } catch {
-        reject(new Error('Failed to parse transcribe response.'));
-      }
-    };
+      request.onerror = () => {
+        reject(new Error('Failed to upload audio for transcription.'));
+      };
 
-    request.onerror = () => {
-      reject(new Error('Failed to upload audio for transcription.'));
-    };
-
-    request.send(formData);
+      request.send(formData);
+    });
   });
 }
 

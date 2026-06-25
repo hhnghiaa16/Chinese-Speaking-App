@@ -11,6 +11,12 @@
       "backgroundColor": "#050316"
     },
     "android": {
+      "package": "com.lanapp.mobile",
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.INTERNET",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ],
       "backgroundColor": "#050316",
       "adaptiveIcon": {
         "backgroundColor": "#050316",
@@ -22,6 +28,19 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "a1f1b16c-fb7a-4ca9-9f47-fe05cccdb41e"
+      }
+    },
+    "plugins": [
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Cho phép LanApp ghi âm giọng nói của bạn để luyện nói với giáo viên AI."
+        }
+      ]
+    ]
   }
 }
