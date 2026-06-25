@@ -9,7 +9,8 @@
       "distribution": "internal",
       "android": {
         "buildType": "apk"
-      }
+      },
+      "channel": "development"
     },
     "preview": {
       "distribution": "internal",
@@ -20,9 +21,12 @@
         "EXPO_PUBLIC_API_URL": "https://chinese-speaking-app-api.vercel.app",
         "EXPO_PUBLIC_SUPABASE_URL": "https://oikzdiqcvprzvysjopzn.supabase.co",
         "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9pa3pkaXFjdnByenZ5c2pvcHpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3ODQ1MzYsImV4cCI6MjA5NTM2MDUzNn0.Wrk_8CfwIZ7cpZPUuXKQ7PYnQRjPMTU-mzpjsctAEWY"
-      }
+      },
+      "channel": "preview"
     },
-    "production": {}
+    "production": {
+      "channel": "production"
+    }
   },
   "submit": {
     "production": {}

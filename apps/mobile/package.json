@@ -4,6 +4,7 @@
   "private": true,
   "main": "index.ts",
   "scripts": {
+    "mobile": "expo start",
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
@@ -21,6 +22,7 @@
     "expo-linear-gradient": "~56.0.4",
     "expo-speech": "~56.0.3",
     "expo-status-bar": "~56.0.4",
+    "expo-updates": "~56.0.19",
     "lucide-react-native": "^1.16.0",
     "react": "19.2.3",
     "react-native": "0.85.3",
